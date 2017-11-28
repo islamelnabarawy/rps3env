@@ -20,6 +20,6 @@ __author__ = 'Islam Elnabarawy'
 
 register(
     id='RPS3Game-v0',
-    entry_point='rps3game.envs:RPS3GameEnv',
+    entry_point='rps3env.envs:RPS3GameEnv',
     kwargs={}
 )
