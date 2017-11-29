@@ -23,6 +23,20 @@ import rps3env
 __author__ = 'Islam Elnabarawy'
 
 
+EMPTY_BOARD = """
+            ..
+         .. ..  ..
+      ..        .. ..
+   .. ..              ..
+.. ..         ..      .. ..
+   ..                    .. ..
+      .. ..              ..
+         ..        .. ..
+            .. ..  ..
+               ..
+"""
+
+
 class RPS3GameEnvTest(unittest.TestCase):
     def test_initializable(self):
         env = gym.make('RPS3Game-v0')
@@ -34,6 +48,13 @@ class RPS3GameEnvTest(unittest.TestCase):
         expected = np.zeros([28, 1], dtype=np.int8)
         self.assertEqual(type(expected), type(actual))
         self.assertTrue(np.equal(expected, actual).all())
+
+    def test_render_empty_board(self):
+        env = gym.make('RPS3Game-v0')
+        env.reset()
+        actual = env.render(mode='ansi')
+        expected = EMPTY_BOARD
+        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':
