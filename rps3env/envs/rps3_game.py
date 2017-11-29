@@ -16,6 +16,7 @@
 import logging
 
 import gym
+import numpy as np
 
 __author__ = 'Islam Elnabarawy'
 
@@ -30,5 +31,5 @@ class RPS3GameEnv(gym.Env):
         pass
 
     def _reset(self):
-        pass
+        return np.zeros([28, 1], dtype=np.int8)
 

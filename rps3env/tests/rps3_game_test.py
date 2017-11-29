@@ -15,6 +15,7 @@
 """
 import unittest
 import gym
+import numpy as np
 
 # noinspection PyUnresolvedReferences
 import rps3env
@@ -26,6 +27,13 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_initializable(self):
         env = gym.make('RPS3Game-v0')
         self.assertIsNotNone(env)
+
+    def test_reset(self):
+        env = gym.make('RPS3Game-v0')
+        actual = env.reset()
+        expected = np.zeros([28, 1], dtype=np.int8)
+        self.assertEqual(type(expected), type(actual))
+        self.assertTrue(np.equal(expected, actual).all())
 
 
 if __name__ == '__main__':
