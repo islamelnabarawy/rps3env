@@ -56,6 +56,8 @@ class RPS3GameEnv(gym.Env):
         return np.zeros([28, 1], dtype=np.int8)
 
     def _render(self, mode='human', close=False):
+        if close:
+            return
         board = STARTING_BOARD
         output = BOARD_TEMPLATE
         for ring in board.keys():
