@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import unittest
+
 import gym
 import numpy as np
 
@@ -21,7 +22,6 @@ import numpy as np
 import rps3env
 
 __author__ = 'Islam Elnabarawy'
-
 
 EMPTY_BOARD = """
             ..
@@ -51,29 +51,33 @@ OU ..         ..      .. OU
 
 
 class RPS3GameEnvTest(unittest.TestCase):
+    def setUp(self):
+        super().setUp()
+        self.env = gym.make('RPS3Game-v0')
+
+    def tearDown(self):
+        super().tearDown()
+        self.env.close()
+
     def test_initializable(self):
-        env = gym.make('RPS3Game-v0')
-        self.assertIsNotNone(env, msg='gym.make() returned None.')
+        self.assertIsNotNone(self.env, msg='gym.make() returned None.')
 
     def test_reset(self):
-        env = gym.make('RPS3Game-v0')
-        actual = env.reset()
-        expected = np.array(['0']*28)
+        actual = self.env.reset()
+        expected = np.array(['0'] * 28)
         self.assertEqual(type(expected), type(actual), msg='Types are not equal.')
         self.assertTrue(np.array_equal(expected, actual), msg='Arrays are not equal.')
 
     def test_render_empty_board(self):
-        env = gym.make('RPS3Game-v0')
-        env.reset()
-        actual = env.render(mode='ansi')
+        self.env.reset()
+        actual = self.env.render(mode='ansi')
         expected = EMPTY_BOARD
         self.assertEqual(expected, actual)
 
     def test_set_board(self):
-        env = gym.make('RPS3Game-v0')
-        env.reset()
-        env.step(['R', 'P', 'S'] * 3)
-        actual = env.render(mode='ansi')
+        self.env.reset()
+        self.env.step(['R', 'P', 'S'] * 3)
+        actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
         self.assertEqual(expected, actual)
 
