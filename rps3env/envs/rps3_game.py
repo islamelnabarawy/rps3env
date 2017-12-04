@@ -16,6 +16,7 @@
 import copy
 import logging
 import math
+import random
 import sys
 
 import gym
@@ -58,13 +59,27 @@ class RPS3GameEnv(gym.Env):
         self.board = None
         self.turn = None
 
+    def _seed(self, seed=None):
+        if seed is None:
+            # generate the seed the same way random.seed() does internally
+            try:
+                from os import urandom as _urandom
+                seed = int.from_bytes(_urandom(2500), 'big')
+            except NotImplementedError:
+                import time
+                seed = int(time.time() * 256)
+        random.seed(seed)
+        return seed
+
     def _step(self, action):
         if self.turn < 0:
             assert (isinstance(action, list))
             for i, v in enumerate(action):
                 self.board['O'][i] = 'P' + v
+            opponent = ['OR', 'OP', 'OS'] * 3
+            random.shuffle(opponent)
             for i in range(9, 18):
-                self.board['O'][i] = 'OU'
+                self.board['O'][i] = opponent[i - 9]
         else:
             assert (isinstance(action, tuple) and len(action) == 2)
             assert (action in self.get_player_moves())
@@ -93,7 +108,11 @@ class RPS3GameEnv(gym.Env):
             return output
 
     def _get_observation(self):
-        return self.board['O'] + self.board['I'] + self.board['C']
+        board = self.board['O'] + self.board['I'] + self.board['C']
+        for i in range(len(board)):
+            if board[i][0] == 'O':
+                board[i] = 'OU'
+        return board
 
     def get_player_moves(self, player='P'):
         moves = []

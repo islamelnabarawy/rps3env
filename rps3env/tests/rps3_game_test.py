@@ -44,11 +44,11 @@ EMPTY_BOARD = """
 EMPTY_OBSERVATION = ['0'] * 28
 
 INIT_BOARD = """
-            OU
-         OU ..  OU
-      OU        .. OU
-   OU ..              OU
-OU ..         ..      .. OU
+            OP
+         OR ..  OS
+      OP        .. OR
+   OS ..              OS
+OP ..         ..      .. OR
    PS                    .. PR
       PP ..              PP
          PR        .. PS
@@ -99,20 +99,11 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual({'turn': 0}, info)
 
     def test_render_set_board(self):
+        self.env.seed(0)
         self.init_board()
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
-
-    def test_null_move(self):
-        self.init_board()
-        obs, reward, done, info = self.env.step(('O0', 'O17'))
-        expected = INIT_OBSERVATION
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(0, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 1}, info)
 
     def test_malformed_move(self):
         self.init_board()
@@ -149,6 +140,17 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.init_board()
         obs, reward, done, info = self.env.step(('O0', 'I0'))
         expected = OBS_AFTER_LEGAL_MOVE
+        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
+        self.assertEqual(0, reward)
+        self.assertEqual(False, done)
+        self.assertEqual({'turn': 1}, info)
+
+    def test_challenge_tie(self):
+        self.env.seed(0)
+        self.init_board()
+        obs, reward, done, info = self.env.step(('O0', 'O17'))
+        expected = INIT_OBSERVATION
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
         self.assertEqual(expected, obs, msg='Arrays are not equal.')
         self.assertEqual(0, reward)
