@@ -65,6 +65,11 @@ class RPS3GameEnvTest(unittest.TestCase):
         super().tearDown()
         self.env.close()
 
+    def init_board(self):
+        self.env.reset()
+        obs, reward, done, info = self.env.step(['R', 'P', 'S'] * 3)
+        return done, info, obs, reward
+
     def test_initializable(self):
         self.assertIsNotNone(self.env, msg='gym.make() returned None.')
 
@@ -81,35 +86,28 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_set_board(self):
-        self.env.reset()
-        obs, reward, done, info = self.env.step(['R', 'P', 'S'] * 3)
+        done, info, obs, reward = self.init_board()
         expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(''.join(expected), ''.join(obs), msg='Arrays are not equal.')
-        self.assertTrue(np.array_equal(expected, obs), msg='Arrays are not equal.')
+        self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 0}, info)
 
+    def test_render_set_board(self):
+        self.init_board()
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
         self.assertEqual(expected, actual)
 
     def test_null_move(self):
-        self.env.reset()
-        self.env.step(['R', 'P', 'S'] * 3)
+        self.init_board()
         obs, reward, done, info = self.env.step(['O0', 'O17'])
         expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
         self.assertEqual(''.join(expected), ''.join(obs), msg='Arrays are not equal.')
-        self.assertTrue(np.array_equal(expected, obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 1}, info)
-
-        actual = self.env.render(mode='ansi')
-        expected = INIT_BOARD
-        self.assertEqual(expected, actual)
 
 
 if __name__ == '__main__':
