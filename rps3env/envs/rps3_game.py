@@ -53,7 +53,7 @@ class RPS3GameEnv(gym.Env):
         pass
 
     def _reset(self):
-        return np.zeros([28, 1], dtype=np.int8)
+        return np.array(['0']*28)
 
     def _render(self, mode='human', close=False):
         if close:

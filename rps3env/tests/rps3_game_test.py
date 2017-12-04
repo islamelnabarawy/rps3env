@@ -40,14 +40,14 @@ EMPTY_BOARD = """
 class RPS3GameEnvTest(unittest.TestCase):
     def test_initializable(self):
         env = gym.make('RPS3Game-v0')
-        self.assertIsNotNone(env)
+        self.assertIsNotNone(env, msg='gym.make() returned None.')
 
     def test_reset(self):
         env = gym.make('RPS3Game-v0')
         actual = env.reset()
-        expected = np.zeros([28, 1], dtype=np.int8)
-        self.assertEqual(type(expected), type(actual))
-        self.assertTrue(np.equal(expected, actual).all())
+        expected = np.array(['0']*28)
+        self.assertEqual(type(expected), type(actual), msg='Types are not equal.')
+        self.assertTrue(np.array_equal(expected, actual), msg='Arrays are not equal.')
 
     def test_render_empty_board(self):
         env = gym.make('RPS3Game-v0')
