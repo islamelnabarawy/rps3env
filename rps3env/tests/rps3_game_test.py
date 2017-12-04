@@ -18,7 +18,6 @@ import sys
 import unittest
 
 import gym
-import numpy as np
 
 # noinspection PyUnresolvedReferences
 import rps3env
@@ -41,6 +40,8 @@ EMPTY_BOARD = """
             .. ..  ..
                ..
 """
+
+EMPTY_OBSERVATION = ['0'] * 28
 
 INIT_BOARD = """
             OU
@@ -79,9 +80,9 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_reset(self):
         actual = self.env.reset()
-        expected = np.array(['0'] * 28)
+        expected = EMPTY_OBSERVATION
         self.assertEqual(type(expected), type(actual), msg='Types are not equal.')
-        self.assertTrue(np.array_equal(expected, actual), msg='Arrays are not equal.')
+        self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
     def test_render_empty_board(self):
         self.env.reset()
@@ -91,8 +92,8 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_set_board(self):
         done, info, obs, reward = self.init_board()
-        expected = np.array(INIT_OBSERVATION)
-        self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
+        expected = INIT_OBSERVATION
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 0}, info)
@@ -101,14 +102,14 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.init_board()
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
-        self.assertEqual(expected, actual)
+        self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
     def test_null_move(self):
         self.init_board()
         obs, reward, done, info = self.env.step(('O0', 'O17'))
-        expected = np.array(INIT_OBSERVATION)
+        expected = INIT_OBSERVATION
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 1}, info)
@@ -122,7 +123,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertRaises(AssertionError, make_empty_move)
 
         def make_bad_move():
-            self.env.step(('', ))
+            self.env.step(('',))
 
         self.assertRaises(AssertionError, make_bad_move)
 

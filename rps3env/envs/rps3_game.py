@@ -92,7 +92,7 @@ class RPS3GameEnv(gym.Env):
             return output
 
     def _get_observation(self):
-        return np.concatenate((self.board['O'], self.board['I'], self.board['C']))
+        return self.board['O'] + self.board['I'] + self.board['C']
 
     def get_player_moves(self, player='P'):
         moves = []
