@@ -58,7 +58,7 @@ OU ..         ..      .. OU
 
 INIT_OBSERVATION = ['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10
 
-OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS'] + ['PR', 'PP', 'PS'] * 2 + ['OU'] * 9 + ['PP'] + ['0'] * 9
+OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS'] + ['PR', 'PP', 'PS'] * 2 + ['OU'] * 9 + ['PR'] + ['0'] * 9
 
 
 class RPS3GameEnvTest(unittest.TestCase):
@@ -144,6 +144,16 @@ class RPS3GameEnvTest(unittest.TestCase):
             self.env.step(('O0', 'C0'))
 
         self.assertRaises(AssertionError, make_illegal_move_3)
+
+    def test_legal_move(self):
+        self.init_board()
+        obs, reward, done, info = self.env.step(('O0', 'I0'))
+        expected = OBS_AFTER_LEGAL_MOVE
+        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
+        self.assertEqual(0, reward)
+        self.assertEqual(False, done)
+        self.assertEqual({'turn': 1}, info)
 
 
 if __name__ == '__main__':

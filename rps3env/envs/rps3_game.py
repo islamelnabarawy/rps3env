@@ -60,14 +60,15 @@ class RPS3GameEnv(gym.Env):
 
     def _step(self, action):
         if self.turn < 0:
-            assert(isinstance(action, list))
+            assert (isinstance(action, list))
             for i, v in enumerate(action):
-                self.board['O'][i] = 'P'+v
+                self.board['O'][i] = 'P' + v
             for i in range(9, 18):
                 self.board['O'][i] = 'OU'
         else:
-            assert(isinstance(action, tuple) and len(action) == 2)
-            assert(action in self.get_player_moves())
+            assert (isinstance(action, tuple) and len(action) == 2)
+            assert (action in self.get_player_moves())
+            self.make_move(action)
 
         self.turn += 1
         return self._get_observation(), 0, False, {'turn': self.turn}
@@ -143,3 +144,15 @@ class RPS3GameEnv(gym.Env):
             )
 
         return result
+
+    def make_move(self, action):
+        move_from, move_to = action
+        from_ring = move_from[0]
+        from_index = int(move_from[1:])
+        to_ring = move_to[0]
+        to_index = int(move_to[1:])
+        from_piece = self.board[from_ring][from_index]
+        to_piece = self.board[to_ring][to_index]
+        if to_piece == '0':
+            self.board[from_ring][int(from_index)] = '0'
+            self.board[to_ring][int(to_index)] = from_piece
