@@ -55,6 +55,10 @@ OU ..         ..      .. OU
                PP
 """
 
+INIT_OBSERVATION = ['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10
+
+OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS'] + ['PR', 'PP', 'PS'] * 2 + ['OU'] * 9 + ['PP'] + ['0'] * 9
+
 
 class RPS3GameEnvTest(unittest.TestCase):
     def setUp(self):
@@ -87,7 +91,7 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_set_board(self):
         done, info, obs, reward = self.init_board()
-        expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
+        expected = np.array(INIT_OBSERVATION)
         self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
@@ -102,9 +106,9 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_null_move(self):
         self.init_board()
         obs, reward, done, info = self.env.step(['O0', 'O17'])
-        expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
+        expected = np.array(INIT_OBSERVATION)
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(''.join(expected), ''.join(obs), msg='Arrays are not equal.')
+        self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 1}, info)
