@@ -105,13 +105,44 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_null_move(self):
         self.init_board()
-        obs, reward, done, info = self.env.step(['O0', 'O17'])
+        obs, reward, done, info = self.env.step(('O0', 'O17'))
         expected = np.array(INIT_OBSERVATION)
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
         self.assertEqual(' '.join(expected), ' '.join(obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 1}, info)
+
+    def test_malformed_move(self):
+        self.init_board()
+
+        def make_empty_move():
+            self.env.step(())
+
+        self.assertRaises(AssertionError, make_empty_move)
+
+        def make_bad_move():
+            self.env.step(('', ))
+
+        self.assertRaises(AssertionError, make_bad_move)
+
+    def test_illegal_moves(self):
+        self.init_board()
+
+        def make_illegal_move_1():
+            self.env.step(('O0', 'O1'))
+
+        self.assertRaises(AssertionError, make_illegal_move_1)
+
+        def make_illegal_move_2():
+            self.env.step(('O0', 'I1'))
+
+        self.assertRaises(AssertionError, make_illegal_move_2)
+
+        def make_illegal_move_3():
+            self.env.step(('O0', 'C0'))
+
+        self.assertRaises(AssertionError, make_illegal_move_3)
 
 
 if __name__ == '__main__':
