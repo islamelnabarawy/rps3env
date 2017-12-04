@@ -13,7 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import copy
 import logging
+import sys
 
 import gym
 import numpy as np
@@ -21,7 +23,8 @@ import numpy as np
 __author__ = 'Islam Elnabarawy'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 STARTING_BOARD = {
     'O': [
@@ -49,23 +52,34 @@ O9 I4         C0      I8 O17
 class RPS3GameEnv(gym.Env):
     metadata = {'render.modes': [None, 'human', 'ansi']}
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.board = None
+
     def _step(self, action):
-        pass
+        for i, v in enumerate(action):
+            self.board['O'][i] = 'P'+v
+        for i in range(9, 18):
+            self.board['O'][i] = 'OU'
+        return self._get_observation()
 
     def _reset(self):
-        return np.array(['0']*28)
+        self.board = copy.deepcopy(STARTING_BOARD)
+        return self._get_observation()
 
     def _render(self, mode='human', close=False):
         if close:
             return
-        board = STARTING_BOARD
         output = BOARD_TEMPLATE
-        for ring in board.keys():
-            for index in range(len(board[ring]) - 1, -1, -1):
-                value = board[ring][index]
+        for ring in self.board.keys():
+            for index in range(len(self.board[ring]) - 1, -1, -1):
+                value = self.board[ring][index]
                 output = output.replace("%s%d" % (ring, index), '..' if value == '0' else value)
 
         if mode == 'human':
             print(output)
         elif mode == 'ansi':
             return output
+
+    def _get_observation(self):
+        return np.concatenate((self.board['O'], self.board['I'], self.board['C']))

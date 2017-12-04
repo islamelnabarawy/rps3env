@@ -36,6 +36,19 @@ EMPTY_BOARD = """
                ..
 """
 
+INIT_BOARD = """
+            OU
+         OU ..  OU
+      OU        .. OU
+   OU ..              OU
+OU ..         ..      .. OU
+   PS                    .. PR
+      PP ..              PP
+         PR        .. PS
+            PS ..  PR
+               PP
+"""
+
 
 class RPS3GameEnvTest(unittest.TestCase):
     def test_initializable(self):
@@ -54,6 +67,14 @@ class RPS3GameEnvTest(unittest.TestCase):
         env.reset()
         actual = env.render(mode='ansi')
         expected = EMPTY_BOARD
+        self.assertEqual(expected, actual)
+
+    def test_set_board(self):
+        env = gym.make('RPS3Game-v0')
+        env.reset()
+        env.step(['R', 'P', 'S'] * 3)
+        actual = env.render(mode='ansi')
+        expected = INIT_BOARD
         self.assertEqual(expected, actual)
 
 
