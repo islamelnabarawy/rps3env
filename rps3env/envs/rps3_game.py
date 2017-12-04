@@ -55,16 +55,21 @@ class RPS3GameEnv(gym.Env):
     def __init__(self) -> None:
         super().__init__()
         self.board = None
+        self.turn = None
 
     def _step(self, action):
-        for i, v in enumerate(action):
-            self.board['O'][i] = 'P'+v
-        for i in range(9, 18):
-            self.board['O'][i] = 'OU'
+        if self.turn < 0:
+            assert(isinstance(action, list))
+            for i, v in enumerate(action):
+                self.board['O'][i] = 'P'+v
+            for i in range(9, 18):
+                self.board['O'][i] = 'OU'
+        self.turn += 1
         return self._get_observation(), 0, False, {}
 
     def _reset(self):
         self.board = copy.deepcopy(STARTING_BOARD)
+        self.turn = -1
         return self._get_observation()
 
     def _render(self, mode='human', close=False):
