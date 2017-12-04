@@ -76,7 +76,15 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_set_board(self):
         self.env.reset()
-        self.env.step(['R', 'P', 'S'] * 3)
+        obs, reward, done, info = self.env.step(['R', 'P', 'S'] * 3)
+        expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
+        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
+        self.assertEqual(''.join(expected), ''.join(obs), msg='Arrays are not equal.')
+        self.assertTrue(np.array_equal(expected, obs), msg='Arrays are not equal.')
+        self.assertEqual(0, reward)
+        self.assertEqual(False, done)
+        self.assertEqual({}, info)
+
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
         self.assertEqual(expected, actual)
