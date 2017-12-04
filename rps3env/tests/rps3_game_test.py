@@ -89,7 +89,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertTrue(np.array_equal(expected, obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
-        self.assertEqual({}, info)
+        self.assertEqual({'turn': 0}, info)
 
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD
@@ -99,13 +99,13 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.env.reset()
         self.env.step(['R', 'P', 'S'] * 3)
         obs, reward, done, info = self.env.step(['O0', 'O17'])
-        expected = np.array(['PR', 'PP', 'PS']*3 + ['OU']*9 + ['0'] * 10)
+        expected = np.array(['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10)
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
         self.assertEqual(''.join(expected), ''.join(obs), msg='Arrays are not equal.')
         self.assertTrue(np.array_equal(expected, obs), msg='Arrays are not equal.')
         self.assertEqual(0, reward)
         self.assertEqual(False, done)
-        self.assertEqual({}, info)
+        self.assertEqual({'turn': 1}, info)
 
         actual = self.env.render(mode='ansi')
         expected = INIT_BOARD

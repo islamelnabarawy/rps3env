@@ -65,7 +65,7 @@ class RPS3GameEnv(gym.Env):
             for i in range(9, 18):
                 self.board['O'][i] = 'OU'
         self.turn += 1
-        return self._get_observation(), 0, False, {}
+        return self._get_observation(), 0, False, {'turn': self.turn}
 
     def _reset(self):
         self.board = copy.deepcopy(STARTING_BOARD)
