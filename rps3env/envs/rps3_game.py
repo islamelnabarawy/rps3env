@@ -13,14 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-import copy
 import logging
 import math
 import random
 import sys
+from enum import Enum
 
 import gym
-import numpy as np
 
 __author__ = 'Islam Elnabarawy'
 
@@ -28,14 +27,65 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-STARTING_BOARD = {
-    'O': [
-        '0', '0', '0', '0', '0', '0', '0', '0', '0',
-        '0', '0', '0', '0', '0', '0', '0', '0', '0'
-    ],
-    'I': ['0', '0', '0', '0', '0', '0', '0', '0', '0'],
-    'C': ['0']
-}
+
+class PieceType(Enum):
+    U = 0
+    R = 1
+    P = 2
+    S = 3
+
+
+class BoardPiece(object):
+    def __init__(self, piece_type: PieceType, player_owned: bool, revealed: bool = False) -> None:
+        super().__init__()
+        self._piece_type = piece_type
+        self._player_owned = player_owned
+        self._revealed = revealed
+
+    def __str__(self) -> str:
+        return self.to_str()
+
+    def to_str(self, hidden=True):
+        if self._player_owned:
+            return 'P' + self._piece_type.name
+        return 'O' + (self._piece_type.name if self._revealed or not hidden else 'U')
+
+    @property
+    def piece_type(self) -> PieceType:
+        return self._piece_type
+
+    @property
+    def player_owned(self) -> bool:
+        return self._player_owned
+
+    @property
+    def revealed(self) -> bool:
+        return self._revealed
+
+
+class BoardLocation(object):
+    def __init__(self, ring: str, index: int, piece: BoardPiece = None) -> None:
+        super().__init__()
+        self._ring = ring
+        self._index = index
+        self._piece = piece
+
+    @property
+    def ring(self) -> str:
+        return self._ring
+
+    @property
+    def index(self) -> int:
+        return self._index
+
+    @property
+    def piece(self) -> BoardPiece:
+        return self._piece
+
+    @piece.setter
+    def piece(self, value: BoardPiece) -> None:
+        self._piece = value
+
 
 BOARD_TEMPLATE = """
             O13
@@ -74,25 +124,33 @@ class RPS3GameEnv(gym.Env):
     def _step(self, action):
         reward = 0
         if self.turn < 0:
-            assert (isinstance(action, list))
+            assert isinstance(action, list) and len(action) == 9
+            assert action.count('R') == action.count('P') == action.count('S') == 3
             for i, v in enumerate(action):
-                self.board['O'][i] = 'P' + v
-            opponent = ['OR', 'OP', 'OS'] * 3
+                self.board['O'][i].piece = BoardPiece(PieceType[v], True)
+            opponent = [PieceType.R, PieceType.P, PieceType.S] * 3
             random.shuffle(opponent)
             for i in range(9, 18):
-                self.board['O'][i] = opponent[i - 9]
+                self.board['O'][i].piece = BoardPiece(opponent[i - 9], False)
         else:
-            assert (isinstance(action, tuple) and len(action) == 2)
-            assert (action in self.get_player_moves())
+            assert isinstance(action, tuple) and len(action) == 2
+            assert action in self.get_player_moves()
             reward = self.make_move(action)
 
         self.turn += 1
         return self._get_observation(), reward, False, {'turn': self.turn}
 
     def _reset(self):
-        self.board = copy.deepcopy(STARTING_BOARD)
+        self._init_board()
         self.turn = -1
         return self._get_observation()
+
+    def _init_board(self):
+        self.board = {
+            'O': [BoardLocation('O', i) for i in range(18)],
+            'I': [BoardLocation('I', i) for i in range(9)],
+            'C': [BoardLocation('C', i) for i in range(1)],
+        }
 
     def _render(self, mode='human', close=False):
         if close:
@@ -100,8 +158,11 @@ class RPS3GameEnv(gym.Env):
         output = BOARD_TEMPLATE
         for ring in self.board.keys():
             for index in range(len(self.board[ring]) - 1, -1, -1):
-                value = self.board[ring][index]
-                output = output.replace("%s%d" % (ring, index), '..' if value == '0' else value)
+                location = self.board[ring][index]
+                output = output.replace(
+                    "%s%d" % (ring, index),
+                    '..' if location.piece is None else location.piece.to_str(False)
+                )
 
         if mode == 'human':
             print(output)
@@ -110,16 +171,16 @@ class RPS3GameEnv(gym.Env):
 
     def _get_observation(self):
         board = self.board['O'] + self.board['I'] + self.board['C']
-        for i in range(len(board)):
-            if board[i][0] == 'O':
-                board[i] = 'OU'
-        return board
+        obs = []
+        for i, l in enumerate(board):
+            obs.append(l.piece.to_str() if l.piece is not None else '0')
+        return obs
 
-    def get_player_moves(self, player='P'):
+    def get_player_moves(self, player=True):
         moves = []
         for (ring, squares) in self.board.items():
-            for (index, piece) in enumerate(squares):
-                if piece[0] == player:
+            for (index, location) in enumerate(squares):
+                if location.piece is not None and (location.piece.player_owned or not player):
                     moves.extend([
                         ('{}{}'.format(ring, index), '{}{}'.format(r, i))
                         for (r, i) in self.get_piece_moves(ring, index)
@@ -128,39 +189,41 @@ class RPS3GameEnv(gym.Env):
 
     def get_piece_moves(self, ring, index):
         result = []
-        player = self.board[ring][index][0]
-        if player == '0':
+        piece = self.board[ring][index].piece
+        if piece is None:
             return result
+
+        def empty_or_opponent(location):
+            return location.piece is None or location.piece.player_owned != piece.player_owned
 
         if ring == 'O':
             left = (index + 1) % 18
-            if self.board[ring][left][0] != player:
+            if empty_or_opponent(self.board[ring][left]):
                 result.append((ring, left))
             right = (index + 17) % 18
-            if self.board[ring][right][0] != player:
+            if empty_or_opponent(self.board[ring][right]):
                 result.append((ring, right))
             inside = int(math.floor(index / 2.0))
-            if self.board['I'][inside][0] != player:
+            if empty_or_opponent(self.board['I'][inside]):
                 result.append(('I', inside))
         elif ring == 'I':
             left = (index + 1) % 9
-            if self.board[ring][left][0] != player:
+            if empty_or_opponent(self.board[ring][left]):
                 result.append((ring, left))
             right = (index + 8) % 9
-            if self.board[ring][right][0] != player:
+            if empty_or_opponent(self.board[ring][right]):
                 result.append((ring, right))
-            outside = int(np.math.floor(index * 2))
-            if self.board['O'][outside][0] != player:
+            outside = int(math.floor(index * 2))
+            if empty_or_opponent(self.board['O'][outside]):
                 result.append(('O', outside))
             outside += 1
-            if self.board['O'][outside][0] != player:
+            if empty_or_opponent(self.board['O'][outside]):
                 result.append(('O', outside))
-            if self.board['C'][0][0] != player:
+            if empty_or_opponent(self.board['C'][0]):
                 result.append(('C', 0))
         elif ring == 'C':
             result.extend(
-                [('I', i) for (i, v) in
-                 enumerate(self.board['I']) if v[0] != player]
+                [('I', i) for (i, v) in enumerate(self.board['I']) if empty_or_opponent(v)]
             )
 
         return result
@@ -171,31 +234,31 @@ class RPS3GameEnv(gym.Env):
         from_index = int(move_from[1:])
         to_ring = move_to[0]
         to_index = int(move_to[1:])
-        from_piece = self.board[from_ring][from_index]
-        to_piece = self.board[to_ring][to_index]
-        if to_piece == '0':
-            self.board[from_ring][from_index] = '0'
-            self.board[to_ring][to_index] = from_piece
+        from_location = self.board[from_ring][from_index]
+        to_location = self.board[to_ring][to_index]
+        if to_location.piece is None:
+            # swap the piece between locations
+            from_location.piece, to_location.piece = None, from_location.piece
             return 0
 
-        player_hand = from_piece[1]
-        opponent_hand = to_piece[1]
+        attacking_hand = from_location.piece.piece_type
+        defending_hand = to_location.piece.piece_type
         result = 0
 
-        if player_hand == opponent_hand:
+        if attacking_hand == defending_hand:
             return result
 
-        if player_hand == 'R':
-            result = 1 if opponent_hand == 'S' else -1
-        if player_hand == 'P':
-            result = 1 if opponent_hand == 'R' else -1
-        if player_hand == 'S':
-            result = 1 if opponent_hand == 'P' else -1
+        if attacking_hand == PieceType.R:
+            result = 1 if defending_hand == PieceType.S else -1
+        if attacking_hand == PieceType.P:
+            result = 1 if defending_hand == PieceType.R else -1
+        if attacking_hand == PieceType.S:
+            result = 1 if defending_hand == PieceType.P else -1
 
         if result > 0:
-            self.board[from_ring][from_index] = '0'
-            self.board[to_ring][to_index] = from_piece
+            # swap the piece between locations
+            from_location.piece, to_location.piece = None, from_location.piece
         elif result < 0:
-            self.board[from_ring][from_index] = '0'
+            from_location.piece = None
 
         return result
