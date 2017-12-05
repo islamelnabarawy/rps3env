@@ -93,6 +93,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     def test_set_board(self):
+        self.env.seed()
         done, info, obs, reward = self.init_board()
         expected = INIT_OBSERVATION
         self.assertEqual(expected, obs, msg='Arrays are not equal.')

@@ -173,7 +173,7 @@ class RPS3GameEnv(gym.Env):
         board = self.board['O'] + self.board['I'] + self.board['C']
         obs = []
         for i, l in enumerate(board):
-            obs.append(l.piece.to_str() if l.piece is not None else '0')
+            obs.append(str(l.piece) if l.piece is not None else '0')
         return obs
 
     def get_player_moves(self, player=True):
