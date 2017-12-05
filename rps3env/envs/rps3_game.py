@@ -72,6 +72,7 @@ class RPS3GameEnv(gym.Env):
         return seed
 
     def _step(self, action):
+        reward = 0
         if self.turn < 0:
             assert (isinstance(action, list))
             for i, v in enumerate(action):
@@ -83,10 +84,10 @@ class RPS3GameEnv(gym.Env):
         else:
             assert (isinstance(action, tuple) and len(action) == 2)
             assert (action in self.get_player_moves())
-            self.make_move(action)
+            reward = self.make_move(action)
 
         self.turn += 1
-        return self._get_observation(), 0, False, {'turn': self.turn}
+        return self._get_observation(), reward, False, {'turn': self.turn}
 
     def _reset(self):
         self.board = copy.deepcopy(STARTING_BOARD)
@@ -173,5 +174,28 @@ class RPS3GameEnv(gym.Env):
         from_piece = self.board[from_ring][from_index]
         to_piece = self.board[to_ring][to_index]
         if to_piece == '0':
-            self.board[from_ring][int(from_index)] = '0'
-            self.board[to_ring][int(to_index)] = from_piece
+            self.board[from_ring][from_index] = '0'
+            self.board[to_ring][to_index] = from_piece
+            return 0
+
+        player_hand = from_piece[1]
+        opponent_hand = to_piece[1]
+        result = 0
+
+        if player_hand == opponent_hand:
+            return result
+
+        if player_hand == 'R':
+            result = 1 if opponent_hand == 'S' else -1
+        if player_hand == 'P':
+            result = 1 if opponent_hand == 'R' else -1
+        if player_hand == 'S':
+            result = 1 if opponent_hand == 'P' else -1
+
+        if result > 0:
+            self.board[from_ring][from_index] = '0'
+            self.board[to_ring][to_index] = from_piece
+        elif result < 0:
+            self.board[from_ring][from_index] = '0'
+
+        return result

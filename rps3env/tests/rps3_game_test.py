@@ -59,6 +59,8 @@ OP ..         ..      .. OR
 INIT_OBSERVATION = ['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10
 
 OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS'] + ['PR', 'PP', 'PS'] * 2 + ['OU'] * 9 + ['PR'] + ['0'] * 9
+OBS_AFTER_CHALLENGE_WIN = ['PR', 'PP', 'PS'] * 2 + ['PR', 'PP', '0', 'PS'] + ['OU'] * 8 + ['0'] * 10
+OBS_AFTER_CHALLENGE_LOSS = ['PR', 'PP', 'PS'] * 2 + ['PR', 'PP', '0'] + ['OU'] * 9 + ['0'] * 10
 
 
 class RPS3GameEnvTest(unittest.TestCase):
@@ -154,6 +156,28 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
         self.assertEqual(expected, obs, msg='Arrays are not equal.')
         self.assertEqual(0, reward)
+        self.assertEqual(False, done)
+        self.assertEqual({'turn': 1}, info)
+
+    def test_challenge_win(self):
+        self.env.seed(0)
+        self.init_board()
+        obs, reward, done, info = self.env.step(('O8', 'O9'))
+        expected = OBS_AFTER_CHALLENGE_WIN
+        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
+        self.assertEqual(1, reward)
+        self.assertEqual(False, done)
+        self.assertEqual({'turn': 1}, info)
+
+    def test_challenge_lose(self):
+        self.env.seed(2)
+        self.init_board()
+        obs, reward, done, info = self.env.step(('O8', 'O9'))
+        expected = OBS_AFTER_CHALLENGE_LOSS
+        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
+        self.assertEqual(expected, obs, msg='Arrays are not equal.')
+        self.assertEqual(-1, reward)
         self.assertEqual(False, done)
         self.assertEqual({'turn': 1}, info)
 
