@@ -56,11 +56,22 @@ OP ..         ..      .. OR
                PP
 """
 
-INIT_OBSERVATION = ['PR', 'PP', 'PS'] * 3 + ['OU'] * 9 + ['0'] * 10
+OBS_AFTER_BOARD_INIT = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
+                       ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU'] + \
+                       ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 
-OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS'] + ['PR', 'PP', 'PS'] * 2 + ['OU'] * 9 + ['PR'] + ['0'] * 9
-OBS_AFTER_CHALLENGE_WIN = ['PR', 'PP', 'PS'] * 2 + ['PR', 'PP', '0', 'PS'] + ['OU'] * 8 + ['0'] * 10
-OBS_AFTER_CHALLENGE_LOSS = ['PR', 'PP', 'PS'] * 2 + ['PR', 'PP', '0'] + ['OU'] * 9 + ['0'] * 10
+OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
+                       ['OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OU', 'OU'] + \
+                       ['PR', '0', '0', '0', '0', '0', '0', 'OU', '0', '0']
+OBS_AFTER_CHALLENGE_WIN = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
+                          ['PS', 'OU', '0', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU'] + \
+                          ['0', '0', '0', '0', '0', 'OU', '0', '0', '0', '0']
+OBS_AFTER_CHALLENGE_TIE = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
+                          ['OU', 'OU', 'OU', '0', 'OU', 'OU', 'OU', 'OU', 'OR'] + \
+                          ['0', '0', '0', '0', '0', '0', 'OU', '0', '0', '0']
+OBS_AFTER_CHALLENGE_LOSS = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
+                           ['OR', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OR'] + \
+                           ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 
 
 class RPS3GameEnvTest(unittest.TestCase):
@@ -75,7 +86,18 @@ class RPS3GameEnvTest(unittest.TestCase):
     def init_board(self):
         self.env.reset()
         obs, reward, done, info = self.env.step(['R', 'P', 'S'] * 3)
-        return done, info, obs, reward
+        return obs, reward, done, info
+
+    def step_assert(self, obs_actual, reward_actual, done_actual, info_actual,
+                    obs_expected, reward_expected=None, done_expected=False, info_expected=None):
+        if reward_expected is None:
+            reward_expected = [0, 0]
+        if info_expected is None:
+            info_expected = {'turn': 0}
+        self.assertEqual(obs_expected, obs_actual, msg='Arrays are not equal.')
+        self.assertEqual(reward_expected, reward_actual)
+        self.assertEqual(done_expected, done_actual)
+        self.assertEqual(info_expected, info_actual)
 
     def test_initializable(self):
         self.assertIsNotNone(self.env, msg='gym.make() returned None.')
@@ -94,12 +116,8 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_set_board(self):
         self.env.seed()
-        done, info, obs, reward = self.init_board()
-        expected = INIT_OBSERVATION
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(0, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 0}, info)
+        obs, reward, done, info = self.init_board()
+        self.step_assert(obs, reward, done, info, OBS_AFTER_BOARD_INIT)
 
     def test_render_set_board(self):
         self.env.seed(0)
@@ -109,6 +127,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
     def test_malformed_move(self):
+        self.env.seed(0)
         self.init_board()
 
         def make_empty_move():
@@ -122,6 +141,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertRaises(AssertionError, make_bad_move)
 
     def test_illegal_moves(self):
+        self.env.seed(0)
         self.init_board()
 
         def make_illegal_move_1():
@@ -140,47 +160,30 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertRaises(AssertionError, make_illegal_move_3)
 
     def test_legal_move(self):
+        self.env.seed(0)
         self.init_board()
         obs, reward, done, info = self.env.step(('O0', 'I0'))
-        expected = OBS_AFTER_LEGAL_MOVE
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(0, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 1}, info)
+        self.step_assert(obs, reward, done, info, OBS_AFTER_LEGAL_MOVE, info_expected={'turn': 1})
 
     def test_challenge_tie(self):
         self.env.seed(0)
         self.init_board()
         obs, reward, done, info = self.env.step(('O0', 'O17'))
-        expected = INIT_OBSERVATION
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(0, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 1}, info)
+        self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_TIE, info_expected={'turn': 1})
 
     def test_challenge_win(self):
         self.env.seed(0)
         self.init_board()
         obs, reward, done, info = self.env.step(('O8', 'O9'))
-        expected = OBS_AFTER_CHALLENGE_WIN
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(1, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 1}, info)
+        self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_WIN,
+                         reward_expected=[1, 0], info_expected={'turn': 1})
 
-    def test_challenge_lose(self):
+    def test_challenge_loss(self):
         self.env.seed(2)
         self.init_board()
         obs, reward, done, info = self.env.step(('O8', 'O9'))
-        expected = OBS_AFTER_CHALLENGE_LOSS
-        self.assertEqual(type(expected), type(obs), msg='Types are not equal.')
-        self.assertEqual(expected, obs, msg='Arrays are not equal.')
-        self.assertEqual(-1, reward)
-        self.assertEqual(False, done)
-        self.assertEqual({'turn': 1}, info)
+        self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_LOSS,
+                         reward_expected=[-1, 0], info_expected={'turn': 1})
 
 
 if __name__ == '__main__':

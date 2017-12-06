@@ -63,7 +63,7 @@ class RPS3GameEnv(gym.Env):
         return seed
 
     def _step(self, action):
-        reward = 0
+        reward = [0, 0]
         if self.turn < 0:
             assert isinstance(action, list) and len(action) == 9
             assert action.count('R') == action.count('P') == action.count('S') == 3
@@ -76,7 +76,11 @@ class RPS3GameEnv(gym.Env):
         else:
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self.get_player_moves()
-            reward = self.make_move(action)
+            reward[0] = self.make_move(action)
+            # make a move for the opponent
+            opponent_moves = self.get_player_moves(False)
+            move = random.choice(opponent_moves)
+            reward[1] = -self.make_move(move)
 
         self.turn += 1
         return self._get_observation(), reward, False, {'turn': self.turn}
@@ -119,7 +123,8 @@ class RPS3GameEnv(gym.Env):
 
     def get_player_moves(self, player=True):
         moves = []
-        for (ring, squares) in self.board.items():
+        for ring in 'OIC':
+            squares = self.board[ring]
             for (index, location) in enumerate(squares):
                 if location.piece is not None and (location.piece.player_owned or not player):
                     moves.extend([
@@ -185,6 +190,10 @@ class RPS3GameEnv(gym.Env):
         attacking_hand = from_location.piece.piece_type
         defending_hand = to_location.piece.piece_type
         result = 0
+
+        # no matter what the outcome is, both pieces will be revealed
+        from_location.piece.revealed = True
+        to_location.piece.revealed = True
 
         if attacking_hand == defending_hand:
             return result

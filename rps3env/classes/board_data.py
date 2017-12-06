@@ -38,7 +38,7 @@ class BoardPiece(object):
     def to_str(self, hidden=True):
         if self._player_owned:
             return 'P' + self._piece_type.name
-        return 'O' + (self._piece_type.name if self._revealed or not hidden else 'U')
+        return 'O' + (self._piece_type.name if self.revealed or not hidden else 'U')
 
     @property
     def piece_type(self) -> PieceType:
@@ -51,6 +51,10 @@ class BoardPiece(object):
     @property
     def revealed(self) -> bool:
         return self._revealed
+
+    @revealed.setter
+    def revealed(self, value):
+        self._revealed = value
 
 
 class BoardLocation(object):
