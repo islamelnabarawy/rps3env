@@ -101,12 +101,13 @@ class RPS3GameEnv(gym.Env):
         if close:
             return
         output = BOARD_TEMPLATE
-        for ring in self.board.keys():
+        for ring in 'OIC':
             for index in range(len(self.board[ring]) - 1, -1, -1):
                 location = self.board[ring][index]
                 output = output.replace(
                     "%s%d" % (ring, index),
-                    '..' if location.piece is None else location.piece.to_str(False)
+                    '..' if location.piece is None else ('{}!' if location.piece.revealed else '{}').format(
+                        location.piece.to_str(False))
                 )
 
         if mode == 'human':
