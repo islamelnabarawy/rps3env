@@ -61,17 +61,20 @@ OBS_AFTER_BOARD_INIT = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + 
                        ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 
 OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
-                       ['OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OU', 'OU'] + \
+                       ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OU'] + \
                        ['PR', '0', '0', '0', '0', '0', '0', 'OU', '0', '0']
 OBS_AFTER_CHALLENGE_WIN = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
-                          ['PS', 'OU', '0', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU'] + \
-                          ['0', '0', '0', '0', '0', 'OU', '0', '0', '0', '0']
+                          ['PS', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU'] + \
+                          ['0', '0', '0', '0', '0', '0', '0', '0', 'OU', '0']
 OBS_AFTER_CHALLENGE_TIE = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
-                          ['OU', 'OU', 'OU', '0', 'OU', 'OU', 'OU', 'OU', 'OR'] + \
-                          ['0', '0', '0', '0', '0', '0', 'OU', '0', '0', '0']
+                          ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OR'] + \
+                          ['0', '0', '0', '0', '0', '0', '0', 'OU', '0', '0']
 OBS_AFTER_CHALLENGE_LOSS = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
                            ['OR', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OR'] + \
                            ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+OBS_AFTER_FULL_GAME = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', '0', 'PP', '0'] + \
+                      ['0', '0', '0', '0', 'PS', '0', '0', 'OU', '0'] + \
+                      ['OU', '0', '0', '0', '0', 'OS', 'OU', 'OU', 'OR', 'PR']
 
 
 class RPS3GameEnvTest(unittest.TestCase):
@@ -184,6 +187,19 @@ class RPS3GameEnvTest(unittest.TestCase):
         obs, reward, done, info = self.env.step(('O8', 'O9'))
         self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_LOSS,
                          reward_expected=[-1, 0], info_expected={'turn': 1})
+
+    def test_full_game(self):
+        self.env.seed(0)
+        self.init_board()
+        moves = [
+            ('O8', 'O9'), ('O9', 'I4'), ('I4', 'I5'), ('I5', 'O11'), ('O11', 'I5'),
+            ('I5', 'O11'), ('O11', 'O12'), ('O12', 'O13'), ('O6', 'I3')
+        ]
+        for move in moves:
+            self.env.step(move)
+        obs, reward, done, info = self.env.step(('I3', 'C0'))
+        self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
+                         reward_expected=[100, 0], done_expected=True, info_expected={'turn': 10})
 
 
 if __name__ == '__main__':

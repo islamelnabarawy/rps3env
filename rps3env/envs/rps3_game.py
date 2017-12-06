@@ -64,6 +64,7 @@ class RPS3GameEnv(gym.Env):
 
     def _step(self, action):
         reward = [0, 0]
+        done = False
         if self.turn < 0:
             assert isinstance(action, list) and len(action) == 9
             assert action.count('R') == action.count('P') == action.count('S') == 3
@@ -77,13 +78,20 @@ class RPS3GameEnv(gym.Env):
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self.get_player_moves()
             reward[0] = self.make_move(action)
-            # make a move for the opponent
-            opponent_moves = self.get_player_moves(False)
-            move = random.choice(opponent_moves)
-            reward[1] = -self.make_move(move)
+            done, player_won = self.is_game_over()
+            if done:
+                reward[0] = 100 if player_won else -100
+            else:
+                # make a move for the opponent
+                opponent_moves = self.get_player_moves(False)
+                move = random.choice(opponent_moves)
+                reward[1] = -self.make_move(move)
+                done, player_won = self.is_game_over()
+                if done:
+                    reward[1] = 100 if player_won else -100
 
         self.turn += 1
-        return self._get_observation(), reward, False, {'turn': self.turn}
+        return self._get_observation(), reward, done, {'turn': self.turn}
 
     def _reset(self):
         self._init_board()
@@ -127,7 +135,7 @@ class RPS3GameEnv(gym.Env):
         for ring in 'OIC':
             squares = self.board[ring]
             for (index, location) in enumerate(squares):
-                if location.piece is not None and (location.piece.player_owned or not player):
+                if location.piece is not None and location.piece.player_owned == player:
                     moves.extend([
                         ('{}{}'.format(ring, index), '{}{}'.format(r, i))
                         for (r, i) in self.get_piece_moves(ring, index)
@@ -213,3 +221,27 @@ class RPS3GameEnv(gym.Env):
             from_location.piece = None
 
         return result
+
+    def is_game_over(self):
+        piece_counters = {PieceType.R: PieceType.P, PieceType.P: PieceType.S, PieceType.S: PieceType.R}
+        player_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
+        opponent_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
+        for ring in 'OIC':
+            for piece in [location.piece for location in self.board[ring] if location.piece is not None]:
+                if piece.player_owned:
+                    player_counts[piece.piece_type] += 1
+                else:
+                    opponent_counts[piece.piece_type] += 1
+        if sum(player_counts.values()) == 0:
+            return True, False
+        if sum(opponent_counts.values()) == 0:
+            return True, True
+        center_piece = self.board['C'][0].piece
+        if center_piece is not None:
+            center_counter = piece_counters[center_piece.piece_type]
+            if center_piece.player_owned and opponent_counts[center_counter] == 0:
+                return True, True
+            if not center_piece.player_owned and player_counts[center_counter] == 0:
+                return True, False
+
+        return False, False
