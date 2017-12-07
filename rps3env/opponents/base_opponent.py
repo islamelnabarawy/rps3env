@@ -40,7 +40,7 @@ class BaseOpponent:
         return self._state.counts
 
     @abstractmethod
-    def get_board_layout(self):
+    def _get_board_layout(self):
         layout = ['R', 'P', 'S'] * 3
         return layout
 
@@ -51,7 +51,7 @@ class BaseOpponent:
         board['O'][index:index + 9] = ['OU'] * 9
 
         if layout is None:
-            layout = self.get_board_layout()
+            layout = self._get_board_layout()
         index = 0 if player_side == 0 else 9
         board['O'][index:index + 9] = ['P%s' % p for p in layout]
 

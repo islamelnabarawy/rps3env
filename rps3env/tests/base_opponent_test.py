@@ -21,8 +21,8 @@ __author__ = 'Islam Elnabarawy'
 
 
 class ConcreteBaseOpponent(BaseOpponent):
-    def get_board_layout(self):
-        return super(ConcreteBaseOpponent, self).get_board_layout()
+    def _get_board_layout(self):
+        return super(ConcreteBaseOpponent, self)._get_board_layout()
 
     def get_player_hand(self):
         return super(ConcreteBaseOpponent, self).get_player_hand()

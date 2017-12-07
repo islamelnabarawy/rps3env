@@ -22,7 +22,7 @@ __author__ = 'Islam Elnabarawy'
 
 class RandomOpponent(BaseOpponent):
 
-    def get_board_layout(self):
+    def _get_board_layout(self):
         layout = ['R', 'P', 'S'] * 3
         random.shuffle(layout)
         return layout
