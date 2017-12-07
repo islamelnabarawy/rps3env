@@ -1,0 +1,79 @@
+from abc import ABCMeta
+from abc import abstractmethod
+
+from rps3env.opponents.match_state import MatchState
+
+
+class BaseOpponent:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        self._state = MatchState()
+
+    @property
+    def board(self):
+        return self._state.board
+
+    @property
+    def captures(self):
+        return self._state.captures
+
+    @property
+    def counts(self):
+        return self._state.counts
+
+    @abstractmethod
+    def get_board_layout(self):
+        layout = ['R', 'P', 'S'] * 3
+        return layout
+
+    def init_board_layout(self, player_side=0, layout=None):
+        board = self._state.board
+
+        index = 9 if player_side == 0 else 0
+        board['O'][index:index + 9] = ['OU'] * 9
+
+        if layout is None:
+            layout = self.get_board_layout()
+        index = 0 if player_side == 0 else 9
+        board['O'][index:index + 9] = ['P%s' % p for p in layout]
+
+        self._state = MatchState(board)
+        return layout
+
+    def reset_board(self, board):
+        self._state = MatchState(board)
+
+    @abstractmethod
+    def get_player_hand(self):
+        hand = 'R'
+        return hand
+
+    @abstractmethod
+    def get_next_move(self):
+        moves = self.get_possible_moves('P')
+        return moves[0] if len(moves) > 0 else None
+
+    def apply_move(self, move):
+        if 'surrender' in move:
+            return
+        self._state.apply_move(
+            (move['from'][0], int(move['from'][1:])),
+            (move['to'][0], int(move['to'][1:])),
+            move['outcome'],
+            move['otherHand'] if 'otherHand' in move else None
+        )
+
+    def get_possible_moves(self, player):
+        return ['%s%s:%s%s' % (move[0] + move[1])
+                for move in self._state.get_possible_moves(player)]
+
+    def get_move_list(self, ring, index):
+        return [('%s%s:%s%s' % (ring, index, move[0], move[1]))
+                for move in self._state.get_piece_moves(ring, index)]
+
+    def get_board_hash(self):
+        return self._state.get_hash()
+
+    def print_board(self):
+        self._state.print_board()
