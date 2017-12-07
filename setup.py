@@ -19,7 +19,7 @@ __author__ = 'Islam Elnabarawy'
 
 setup(
     name='rps3env',
-    version='0.0.1',
+    version='0.1',
     install_requires=['gym', 'numpy'],
     url='https://github.com/islamelnabarawy/rps3env'
 )
