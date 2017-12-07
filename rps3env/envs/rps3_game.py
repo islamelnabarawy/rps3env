@@ -70,23 +70,21 @@ class RPS3GameEnv(gym.Env):
             assert action.count('R') == action.count('P') == action.count('S') == 3
             for i, v in enumerate(action):
                 self.board['O'][i].piece = BoardPiece(PieceType[v], True)
-            opponent = [PieceType.R, PieceType.P, PieceType.S] * 3
-            random.shuffle(opponent)
+            opponent = self._get_opponent_layout()
             for i in range(9, 18):
                 self.board['O'][i].piece = BoardPiece(opponent[i - 9], False)
         else:
             assert isinstance(action, tuple) and len(action) == 2
-            assert action in self.get_player_moves()
-            reward[0] = self.make_move(action)
-            done, player_won = self.is_game_over()
+            assert action in self._get_player_moves()
+            reward[0] = self._make_move(action)
+            done, player_won = self._is_game_over()
             if done:
                 reward[0] = 100 if player_won else -100
             else:
                 # make a move for the opponent
-                opponent_moves = self.get_player_moves(False)
-                move = random.choice(opponent_moves)
-                reward[1] = -self.make_move(move)
-                done, player_won = self.is_game_over()
+                move = self._get_opponent_move()
+                reward[1] = -self._make_move(move)
+                done, player_won = self._is_game_over()
                 if done:
                     reward[1] = 100 if player_won else -100
 
@@ -130,7 +128,17 @@ class RPS3GameEnv(gym.Env):
             obs.append(str(l.piece) if l.piece is not None else '0')
         return obs
 
-    def get_player_moves(self, player=True):
+    def _get_opponent_layout(self):
+        opponent = [PieceType.R, PieceType.P, PieceType.S] * 3
+        random.shuffle(opponent)
+        return opponent
+
+    def _get_opponent_move(self):
+        opponent_moves = self._get_player_moves(False)
+        move = random.choice(opponent_moves)
+        return move
+
+    def _get_player_moves(self, player=True):
         moves = []
         for ring in 'OIC':
             squares = self.board[ring]
@@ -138,11 +146,11 @@ class RPS3GameEnv(gym.Env):
                 if location.piece is not None and location.piece.player_owned == player:
                     moves.extend([
                         ('{}{}'.format(ring, index), '{}{}'.format(r, i))
-                        for (r, i) in self.get_piece_moves(ring, index)
+                        for (r, i) in self._get_piece_moves(ring, index)
                     ])
         return moves
 
-    def get_piece_moves(self, ring, index):
+    def _get_piece_moves(self, ring, index):
         result = []
         piece = self.board[ring][index].piece
         if piece is None:
@@ -183,7 +191,7 @@ class RPS3GameEnv(gym.Env):
 
         return result
 
-    def make_move(self, action):
+    def _make_move(self, action):
         move_from, move_to = action
         from_ring = move_from[0]
         from_index = int(move_from[1:])
@@ -222,7 +230,7 @@ class RPS3GameEnv(gym.Env):
 
         return result
 
-    def is_game_over(self):
+    def _is_game_over(self):
         piece_counters = {PieceType.R: PieceType.P, PieceType.P: PieceType.S, PieceType.S: PieceType.R}
         player_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
         opponent_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
