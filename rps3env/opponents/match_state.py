@@ -170,7 +170,8 @@ class MatchState:
 
     def get_possible_moves(self, player):
         moves = []
-        for (ring, squares) in self._board.items():
+        for ring in 'OIC':
+            squares = self._board[ring]
             for (index, piece) in enumerate(squares):
                 if piece[0] == player:
                     moves.extend([
