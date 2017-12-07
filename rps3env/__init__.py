@@ -23,3 +23,9 @@ register(
     entry_point='rps3env.envs:RPS3GameEnv',
     kwargs={}
 )
+
+register(
+    id='RPS3Game-v1',
+    entry_point='rps3env.envs:RPS3GameMinMaxEnv',
+    kwargs={}
+)

@@ -286,3 +286,8 @@ class RPS3GameEnv(gym.Env):
                 return True, False
 
         return False, False
+
+
+class RPS3GameMinMaxEnv(RPS3GameEnv):
+    def _init_opponent(self):
+        self.opponent = opponents.MinMaxOpponent()

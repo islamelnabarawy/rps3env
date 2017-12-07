@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from rps3env.envs.rps3_game import RPS3GameEnv
+from rps3env.envs.rps3_game import RPS3GameEnv, RPS3GameMinMaxEnv
 
 __author__ = 'Islam Elnabarawy'
 
