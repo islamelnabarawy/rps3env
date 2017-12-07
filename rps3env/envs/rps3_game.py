@@ -20,6 +20,7 @@ import sys
 
 import gym
 
+from rps3env import opponents
 from rps3env.classes import PieceType, BoardPiece, BoardLocation
 
 __author__ = 'Islam Elnabarawy'
@@ -47,8 +48,9 @@ class RPS3GameEnv(gym.Env):
 
     def __init__(self) -> None:
         super().__init__()
-        self.board = None
-        self.turn = None
+        self.board = None  # type: dict[str, list[BoardLocation]]
+        self.turn = None  # type: int
+        self.opponent = None  # type: opponents.BaseOpponent
 
     def _seed(self, seed=None):
         if seed is None:
@@ -70,13 +72,18 @@ class RPS3GameEnv(gym.Env):
             assert action.count('R') == action.count('P') == action.count('S') == 3
             for i, v in enumerate(action):
                 self.board['O'][i].piece = BoardPiece(PieceType[v], True)
-            opponent = self._get_opponent_layout()
+            layout = self._get_opponent_layout()
             for i in range(9, 18):
-                self.board['O'][i].piece = BoardPiece(opponent[i - 9], False)
+                self.board['O'][i].piece = BoardPiece(layout[i - 9], False)
         else:
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self._get_player_moves()
             reward[0] = self._make_move(action)
+
+            # tell opponent about the move's result
+            self._opponent_apply_move(action, reward[0])
+
+            # check game over condition
             done, player_won = self._is_game_over()
             if done:
                 reward[0] = 100 if player_won else -100
@@ -84,6 +91,11 @@ class RPS3GameEnv(gym.Env):
                 # make a move for the opponent
                 move = self._get_opponent_move()
                 reward[1] = -self._make_move(move)
+
+                # tell opponent about the move's result
+                self._opponent_apply_move(move, -reward[1])
+
+                # check game over condition
                 done, player_won = self._is_game_over()
                 if done:
                     reward[1] = 100 if player_won else -100
@@ -93,6 +105,7 @@ class RPS3GameEnv(gym.Env):
 
     def _reset(self):
         self._init_board()
+        self._init_opponent()
         self.turn = -1
         return self._get_observation()
 
@@ -102,6 +115,9 @@ class RPS3GameEnv(gym.Env):
             'I': [BoardLocation('I', i) for i in range(9)],
             'C': [BoardLocation('C', i) for i in range(1)],
         }
+
+    def _init_opponent(self):
+        self.opponent = opponents.RandomOpponent()
 
     def _render(self, mode='human', close=False):
         if close:
@@ -129,14 +145,31 @@ class RPS3GameEnv(gym.Env):
         return obs
 
     def _get_opponent_layout(self):
-        opponent = [PieceType.R, PieceType.P, PieceType.S] * 3
-        random.shuffle(opponent)
-        return opponent
+        layout = self.opponent.init_board_layout(1)
+        return [PieceType[s] for s in layout]
 
     def _get_opponent_move(self):
-        opponent_moves = self._get_player_moves(False)
-        move = random.choice(opponent_moves)
-        return move
+        opponent_move = self.opponent.get_next_move().split(':')
+        logger.debug("opponent move: %s", opponent_move)
+        return opponent_move
+
+    def _opponent_apply_move(self, move, result):
+        move_from = move[0]
+        move_to = move[1]
+        from_location = self.board[move_from[0]][int(move_from[1:])]
+        to_location = self.board[move_to[0]][int(move_to[1:])]
+        move_data = {'from': move_from, 'to': move_to}
+        if result == 0:
+            if from_location.piece is None:
+                move_data['outcome'] = 'M'  # this was a move action
+            else:
+                move_data['outcome'] = 'T'  # it was a tie
+                move_data['otherHand'] = from_location.piece.piece_type.name
+        else:
+            move_data['outcome'] = 'W' if result > 0 else 'L'
+            move_data['otherHand'] = from_location.piece.piece_type.name if from_location.piece is not None \
+                else to_location.piece.piece_type.name
+        self.opponent.apply_move(move_data)
 
     def _get_player_moves(self, player=True):
         moves = []
