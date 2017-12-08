@@ -97,9 +97,11 @@ class RPS3GameEnv(gym.Env):
         done = False
         if self._turns < 0:
             assert isinstance(action, list) and len(action) == 9
-            assert action.count('R') == action.count('P') == action.count('S') == 3
+            assert action.count(PieceType.R.value) == \
+                   action.count(PieceType.P.value) == \
+                   action.count(PieceType.S.value) == 3
             for i, v in enumerate(action):
-                self._board['O'][i].piece = BoardPiece(PieceType[v], True)
+                self._board['O'][i].piece = BoardPiece(PieceType(v), True)
             layout = self._get_opponent_layout()
             for i in range(9, 18):
                 self._board['O'][i].piece = BoardPiece(layout[i - 9], False)

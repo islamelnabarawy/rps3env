@@ -118,7 +118,7 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def init_board(self):
         self.env.reset()
-        obs, reward, done, info = self.env.step(['R', 'P', 'S'] * 3)
+        obs, reward, done, info = self.env.step([1, 2, 3] * 3)
         return obs, reward, done, info
 
     def step_assert(self, obs_actual, reward_actual, done_actual, info_actual,
@@ -148,8 +148,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(1, min(self.env.action_space.low))
 
     def test_action_space_post_init(self):
-        self.env.reset()
-        self.env.step(['R', 'P', 'S'] * 3)
+        self.init_board()
         self.assertIsInstance(self.env.action_space, Space)
         self.assertEqual(2, self.env.action_space.shape)
         self.assertEqual(27, max(self.env.action_space.high))
