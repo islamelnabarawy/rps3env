@@ -78,6 +78,27 @@ class RPS3GameEnv(gym.Env):
             self._reward_range = (-100, 100)
         return self._reward_range
 
+    @property
+    def available_actions(self):
+        if self._board is None:
+            raise ValueError("The environment has not been initialized. Please call reset() first.")
+        actions = []
+        if self._action_space.shape == 9:
+            # board setup phase
+            raise NotImplementedError()
+        else:
+            # game phase
+            def l2i(l):
+                if l[0] == 'O':
+                    return int(l[1:])
+                if l[0] == 'I':
+                    return 18 + int(l[1:])
+                return 27
+
+            moves = self._get_player_moves()
+            actions.extend([(l2i(l1), l2i(l2)) for l1, l2 in moves])
+        return actions
+
     def _seed(self, seed=None):
         if seed is None:
             # generate the seed the same way random.seed() does internally
@@ -108,11 +129,12 @@ class RPS3GameEnv(gym.Env):
             self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
         else:
             assert isinstance(action, tuple) and len(action) == 2
-            assert action in self._get_player_moves()
-            reward[0] = self._make_move(action)
+            assert action in self.available_actions
+            move = self._action_to_move(action)
+            reward[0] = self._make_move(move)
 
             # tell opponent about the move's result
-            self._opponent_apply_move(action, reward[0])
+            self._opponent_apply_move(move, reward[0])
 
             # check game over condition
             done, player_won = self._is_game_over()
@@ -328,6 +350,14 @@ class RPS3GameEnv(gym.Env):
                 return True, False
 
         return False, False
+
+    def _action_to_move(self, action):
+        def i2l(i):
+            if i < 18: return 'O{}'.format(i)
+            if i < 27: return 'I{}'.format(i - 18)
+            return 'C0'
+
+        return tuple(i2l(i) for i in action)
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):

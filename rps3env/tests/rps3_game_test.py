@@ -106,6 +106,9 @@ OBS_AFTER_FULL_GAME = {
     'piece_type': [1, 2, 3, 1, 2, 3, -1, 2, -1, -1, -1, -1, -1, 3, -1, -1, 0, -1, 0, -1, -1, -1, -1, 3, 0, 0, 1, 1]
 }
 
+AVAILABLE_ACTIONS_AFTER_INIT = [
+    (0, 17), (0, 18), (1, 18), (2, 19), (3, 19), (4, 20), (5, 20), (6, 21), (7, 21), (8, 9), (8, 22)
+]
 
 class RPS3GameEnvTest(unittest.TestCase):
     def setUp(self):
@@ -194,75 +197,65 @@ class RPS3GameEnvTest(unittest.TestCase):
         expected = INIT_BOARD
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
+    def test_available_actions(self):
+        self.init_board()
+        available_actions = self.env.available_actions
+        logger.debug(available_actions)
+        self.assertEqual(AVAILABLE_ACTIONS_AFTER_INIT, available_actions)
+
     def test_malformed_move(self):
         self.env.seed(0)
         self.init_board()
 
-        def make_empty_move():
-            self.env.step(())
-
-        self.assertRaises(AssertionError, make_empty_move)
-
-        def make_bad_move():
-            self.env.step(('',))
-
-        self.assertRaises(AssertionError, make_bad_move)
+        self.assertRaises(AssertionError, lambda: self.env.step(()))
+        self.assertRaises(AssertionError, lambda: self.env.step((0,)))
 
     def test_illegal_moves(self):
         self.env.seed(0)
         self.init_board()
 
-        def make_illegal_move_1():
-            self.env.step(('O0', 'O1'))
-
-        self.assertRaises(AssertionError, make_illegal_move_1)
-
-        def make_illegal_move_2():
-            self.env.step(('O0', 'I1'))
-
-        self.assertRaises(AssertionError, make_illegal_move_2)
-
-        def make_illegal_move_3():
-            self.env.step(('O0', 'C0'))
-
-        self.assertRaises(AssertionError, make_illegal_move_3)
+        self.assertRaises(AssertionError, lambda: self.env.step((0, 1)))
+        self.assertRaises(AssertionError, lambda: self.env.step((0, 19)))
+        self.assertRaises(AssertionError, lambda: self.env.step((0, 27)))
 
     def test_legal_move(self):
         self.env.seed(0)
         self.init_board()
-        obs, reward, done, info = self.env.step(('O0', 'I0'))
+        obs, reward, done, info = self.env.step((0, 18))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_LEGAL_MOVE, info_expected={'turn': 1})
 
     def test_challenge_tie(self):
         self.env.seed(0)
         self.init_board()
-        obs, reward, done, info = self.env.step(('O0', 'O17'))
+        obs, reward, done, info = self.env.step((0, 17))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_TIE, info_expected={'turn': 1})
 
     def test_challenge_win(self):
         self.env.seed(0)
         self.init_board()
-        obs, reward, done, info = self.env.step(('O8', 'O9'))
+        obs, reward, done, info = self.env.step((8, 9))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_WIN,
                          reward_expected=[1, 0], info_expected={'turn': 1})
 
     def test_challenge_loss(self):
         self.env.seed(2)
         self.init_board()
-        obs, reward, done, info = self.env.step(('O8', 'O9'))
+        obs, reward, done, info = self.env.step((8, 9))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_CHALLENGE_LOSS,
                          reward_expected=[-1, 0], info_expected={'turn': 1})
 
     def test_full_game(self):
         self.env.seed(0)
         self.init_board()
-        moves = [
-            ('O8', 'O9'), ('O9', 'I4'), ('I4', 'I5'), ('I5', 'O11'), ('O11', 'I5'),
-            ('I5', 'O11'), ('O11', 'O12'), ('O12', 'O13'), ('O6', 'I3')
-        ]
+        moves = [(8, 9), (9, 22), (22, 23), (23, 11), (11, 23), (23, 11), (11, 12), (12, 13), (6, 21)]
         for move in moves:
             self.env.step(move)
-        obs, reward, done, info = self.env.step(('I3', 'C0'))
+        obs, reward, done, info = self.env.step((21, 27))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'turn': 10})
 
