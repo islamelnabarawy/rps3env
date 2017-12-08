@@ -18,9 +18,11 @@ import sys
 import unittest
 
 import gym
+from gym import Space
 
 # noinspection PyUnresolvedReferences
 import rps3env
+from rps3env.envs import RPS3GameEnv
 
 __author__ = 'Islam Elnabarawy'
 
@@ -80,7 +82,7 @@ OBS_AFTER_FULL_GAME = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', '0', 'PP', '0'] + \
 class RPS3GameEnvTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.env = gym.make('RPS3Game-v0')
+        self.env = gym.make('RPS3Game-v0')  # type: RPS3GameEnv
 
     def tearDown(self):
         super().tearDown()
@@ -105,10 +107,45 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_initializable(self):
         self.assertIsNotNone(self.env, msg='gym.make() returned None.')
 
+    def test_action_space_pre_reset(self):
+        self.assertRaises(ValueError, lambda: self.env.action_space)
+
+    def test_action_space_pre_init(self):
+        self.env.reset()
+        self.assertIsInstance(self.env.action_space, Space)
+        self.assertEqual(9, self.env.action_space.shape)
+        self.assertEqual(3, max(self.env.action_space.high))
+        self.assertEqual(3, min(self.env.action_space.high))
+        self.assertEqual(1, max(self.env.action_space.low))
+        self.assertEqual(1, min(self.env.action_space.low))
+
+    def test_action_space_post_init(self):
+        self.env.reset()
+        self.env.step(['R', 'P', 'S'] * 3)
+        self.assertIsInstance(self.env.action_space, Space)
+        self.assertEqual(2, self.env.action_space.shape)
+        self.assertEqual(27, max(self.env.action_space.high))
+        self.assertEqual(27, min(self.env.action_space.high))
+        self.assertEqual(0, max(self.env.action_space.low))
+        self.assertEqual(0, min(self.env.action_space.low))
+
+    def test_observation_space(self):
+        self.assertIsInstance(self.env.observation_space, Space)
+        self.assertEqual(2, len(self.env.observation_space.spaces))
+        self.assertEqual(28, self.env.observation_space.spaces[0].shape)
+        self.assertEqual(4, max(self.env.observation_space.spaces[0].high))
+        self.assertEqual(4, min(self.env.observation_space.spaces[0].high))
+        self.assertEqual(0, max(self.env.observation_space.spaces[0].low))
+        self.assertEqual(0, min(self.env.observation_space.spaces[0].low))
+        self.assertEqual(28, self.env.observation_space.spaces[1].n)
+
+    def test_reward_range(self):
+        self.assertEqual(-100, self.env.reward_range[0])
+        self.assertEqual(100, self.env.reward_range[1])
+
     def test_reset(self):
         actual = self.env.reset()
         expected = EMPTY_OBSERVATION
-        self.assertEqual(type(expected), type(actual), msg='Types are not equal.')
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
     def test_render_empty_board(self):

@@ -19,6 +19,7 @@ import random
 import sys
 
 import gym
+from gym import spaces
 
 from rps3env import opponents
 from rps3env.classes import PieceType, BoardPiece, BoardLocation
@@ -51,6 +52,30 @@ class RPS3GameEnv(gym.Env):
         self.board = None  # type: dict[str, list[BoardLocation]]
         self.turn = None  # type: int
         self.opponent = None  # type: opponents.BaseOpponent
+        self._action_space = None  # type: spaces.MultiDiscrete
+        self._observation_space = None  # type: spaces.Tuple
+        self._reward_range = None  # type: (int, int)
+
+    @property
+    def action_space(self) -> spaces.MultiDiscrete:
+        if self._action_space is None:
+            raise ValueError("The environment has not been initialized. Please call reset() first.")
+        return self._action_space
+
+    @property
+    def observation_space(self) -> spaces.Tuple:
+        if self._observation_space is None:
+            self._observation_space = spaces.Tuple((
+                spaces.MultiDiscrete([[0, 4] for _ in range(28)]),
+                spaces.MultiBinary(28)
+            ))
+        return self._observation_space
+
+    @property
+    def reward_range(self) -> (int, int):
+        if self._reward_range is None:
+            self._reward_range = (-100, 100)
+        return self._reward_range
 
     def _seed(self, seed=None):
         if seed is None:
@@ -65,6 +90,8 @@ class RPS3GameEnv(gym.Env):
         return seed
 
     def _step(self, action):
+        if self.board is None:
+            raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
         done = False
         if self.turn < 0:
@@ -75,6 +102,7 @@ class RPS3GameEnv(gym.Env):
             layout = self._get_opponent_layout()
             for i in range(9, 18):
                 self.board['O'][i].piece = BoardPiece(layout[i - 9], False)
+            self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
         else:
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self._get_player_moves()
@@ -107,6 +135,7 @@ class RPS3GameEnv(gym.Env):
         self._init_board()
         self._init_opponent()
         self.turn = -1
+        self._action_space = spaces.MultiDiscrete([[1, 3] for _ in range(9)])
         return self._get_observation()
 
     def _init_board(self):
