@@ -49,9 +49,9 @@ class RPS3GameEnv(gym.Env):
 
     def __init__(self) -> None:
         super().__init__()
-        self.board = None  # type: dict[str, list[BoardLocation]]
-        self.turn = None  # type: int
-        self.opponent = None  # type: opponents.BaseOpponent
+        self._board = None  # type: dict[str, list[BoardLocation]]
+        self._turns = None  # type: int
+        self._opponent = None  # type: opponents.BaseOpponent
         self._action_space = None  # type: spaces.MultiDiscrete
         self._observation_space = None  # type: spaces.Tuple
         self._reward_range = None  # type: (int, int)
@@ -91,18 +91,18 @@ class RPS3GameEnv(gym.Env):
         return seed
 
     def _step(self, action):
-        if self.board is None:
+        if self._board is None:
             raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
         done = False
-        if self.turn < 0:
+        if self._turns < 0:
             assert isinstance(action, list) and len(action) == 9
             assert action.count('R') == action.count('P') == action.count('S') == 3
             for i, v in enumerate(action):
-                self.board['O'][i].piece = BoardPiece(PieceType[v], True)
+                self._board['O'][i].piece = BoardPiece(PieceType[v], True)
             layout = self._get_opponent_layout()
             for i in range(9, 18):
-                self.board['O'][i].piece = BoardPiece(layout[i - 9], False)
+                self._board['O'][i].piece = BoardPiece(layout[i - 9], False)
             self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
         else:
             assert isinstance(action, tuple) and len(action) == 2
@@ -129,33 +129,33 @@ class RPS3GameEnv(gym.Env):
                 if done:
                     reward[1] = 100 if player_won else -100
 
-        self.turn += 1
-        return self._get_observation(), reward, done, {'turn': self.turn}
+        self._turns += 1
+        return self._get_observation(), reward, done, {'turn': self._turns}
 
     def _reset(self):
         self._init_board()
         self._init_opponent()
-        self.turn = -1
+        self._turns = -1
         self._action_space = spaces.MultiDiscrete([[1, 3] for _ in range(9)])
         return self._get_observation()
 
     def _init_board(self):
-        self.board = {
+        self._board = {
             'O': [BoardLocation('O', i) for i in range(18)],
             'I': [BoardLocation('I', i) for i in range(9)],
             'C': [BoardLocation('C', i) for i in range(1)],
         }
 
     def _init_opponent(self):
-        self.opponent = opponents.RandomOpponent()
+        self._opponent = opponents.RandomOpponent()
 
     def _render(self, mode='human', close=False):
         if close:
             return
         output = BOARD_TEMPLATE
         for ring in 'OIC':
-            for index in range(len(self.board[ring]) - 1, -1, -1):
-                location = self.board[ring][index]
+            for index in range(len(self._board[ring]) - 1, -1, -1):
+                location = self._board[ring][index]
                 output = output.replace(
                     "%s%d" % (ring, index),
                     '..' if location.piece is None else ('{}!' if location.piece.revealed else '{}').format(
@@ -168,7 +168,7 @@ class RPS3GameEnv(gym.Env):
             return output
 
     def _get_observation(self):
-        board = self.board['O'] + self.board['I'] + self.board['C']
+        board = self._board['O'] + self._board['I'] + self._board['C']
         obs = {
             'occupied': [location.piece is not None for location in board],
             'player_owned': [location.piece is not None and location.piece.player_owned for location in board],
@@ -185,19 +185,19 @@ class RPS3GameEnv(gym.Env):
         return obs
 
     def _get_opponent_layout(self):
-        layout = self.opponent.init_board_layout(1)
+        layout = self._opponent.init_board_layout(1)
         return [PieceType[s] for s in layout]
 
     def _get_opponent_move(self):
-        opponent_move = self.opponent.get_next_move().split(':')
+        opponent_move = self._opponent.get_next_move().split(':')
         logger.debug("opponent move: %s", opponent_move)
         return opponent_move
 
     def _opponent_apply_move(self, move, result):
         move_from = move[0]
         move_to = move[1]
-        from_location = self.board[move_from[0]][int(move_from[1:])]
-        to_location = self.board[move_to[0]][int(move_to[1:])]
+        from_location = self._board[move_from[0]][int(move_from[1:])]
+        to_location = self._board[move_to[0]][int(move_to[1:])]
         move_data = {'from': move_from, 'to': move_to}
         if result == 0:
             if from_location.piece is None:
@@ -209,12 +209,12 @@ class RPS3GameEnv(gym.Env):
             move_data['outcome'] = 'W' if result > 0 else 'L'
             move_data['otherHand'] = from_location.piece.piece_type.name if from_location.piece is not None \
                 else to_location.piece.piece_type.name
-        self.opponent.apply_move(move_data)
+        self._opponent.apply_move(move_data)
 
     def _get_player_moves(self, player=True):
         moves = []
         for ring in 'OIC':
-            squares = self.board[ring]
+            squares = self._board[ring]
             for (index, location) in enumerate(squares):
                 if location.piece is not None and location.piece.player_owned == player:
                     moves.extend([
@@ -225,7 +225,7 @@ class RPS3GameEnv(gym.Env):
 
     def _get_piece_moves(self, ring, index):
         result = []
-        piece = self.board[ring][index].piece
+        piece = self._board[ring][index].piece
         if piece is None:
             return result
 
@@ -234,32 +234,32 @@ class RPS3GameEnv(gym.Env):
 
         if ring == 'O':
             left = (index + 1) % 18
-            if empty_or_opponent(self.board[ring][left]):
+            if empty_or_opponent(self._board[ring][left]):
                 result.append((ring, left))
             right = (index + 17) % 18
-            if empty_or_opponent(self.board[ring][right]):
+            if empty_or_opponent(self._board[ring][right]):
                 result.append((ring, right))
             inside = int(math.floor(index / 2.0))
-            if empty_or_opponent(self.board['I'][inside]):
+            if empty_or_opponent(self._board['I'][inside]):
                 result.append(('I', inside))
         elif ring == 'I':
             left = (index + 1) % 9
-            if empty_or_opponent(self.board[ring][left]):
+            if empty_or_opponent(self._board[ring][left]):
                 result.append((ring, left))
             right = (index + 8) % 9
-            if empty_or_opponent(self.board[ring][right]):
+            if empty_or_opponent(self._board[ring][right]):
                 result.append((ring, right))
             outside = int(math.floor(index * 2))
-            if empty_or_opponent(self.board['O'][outside]):
+            if empty_or_opponent(self._board['O'][outside]):
                 result.append(('O', outside))
             outside += 1
-            if empty_or_opponent(self.board['O'][outside]):
+            if empty_or_opponent(self._board['O'][outside]):
                 result.append(('O', outside))
-            if empty_or_opponent(self.board['C'][0]):
+            if empty_or_opponent(self._board['C'][0]):
                 result.append(('C', 0))
         elif ring == 'C':
             result.extend(
-                [('I', i) for (i, v) in enumerate(self.board['I']) if empty_or_opponent(v)]
+                [('I', i) for (i, v) in enumerate(self._board['I']) if empty_or_opponent(v)]
             )
 
         return result
@@ -270,8 +270,8 @@ class RPS3GameEnv(gym.Env):
         from_index = int(move_from[1:])
         to_ring = move_to[0]
         to_index = int(move_to[1:])
-        from_location = self.board[from_ring][from_index]
-        to_location = self.board[to_ring][to_index]
+        from_location = self._board[from_ring][from_index]
+        to_location = self._board[to_ring][to_index]
         if to_location.piece is None:
             # swap the piece between locations
             from_location.piece, to_location.piece = None, from_location.piece
@@ -308,7 +308,7 @@ class RPS3GameEnv(gym.Env):
         player_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
         opponent_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
         for ring in 'OIC':
-            for piece in [location.piece for location in self.board[ring] if location.piece is not None]:
+            for piece in [location.piece for location in self._board[ring] if location.piece is not None]:
                 if piece.player_owned:
                     player_counts[piece.piece_type] += 1
                 else:
@@ -317,7 +317,7 @@ class RPS3GameEnv(gym.Env):
             return True, False
         if sum(opponent_counts.values()) == 0:
             return True, True
-        center_piece = self.board['C'][0].piece
+        center_piece = self._board['C'][0].piece
         if center_piece is not None:
             center_counter = piece_counters[center_piece.piece_type]
             if center_piece.player_owned and opponent_counts[center_counter] == 0:
