@@ -13,6 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+import itertools
 import logging
 import math
 import random
@@ -85,7 +86,7 @@ class RPS3GameEnv(gym.Env):
         actions = []
         if self._action_space.shape == 9:
             # board setup phase
-            raise NotImplementedError()
+            actions.extend(itertools.permutations([1, 2, 3] * 3))
         else:
             # game phase
             def l2i(l):

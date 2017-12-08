@@ -110,6 +110,7 @@ AVAILABLE_ACTIONS_AFTER_INIT = [
     (0, 17), (0, 18), (1, 18), (2, 19), (3, 19), (4, 20), (5, 20), (6, 21), (7, 21), (8, 9), (8, 22)
 ]
 
+
 class RPS3GameEnvTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
@@ -197,10 +198,14 @@ class RPS3GameEnvTest(unittest.TestCase):
         expected = INIT_BOARD
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
-    def test_available_actions(self):
+    def test_init_available_actions(self):
+        self.env.reset()
+        available_actions = self.env.available_actions
+        self.assertEqual(362880, len(available_actions))
+
+    def test_game_available_actions(self):
         self.init_board()
         available_actions = self.env.available_actions
-        logger.debug(available_actions)
         self.assertEqual(AVAILABLE_ACTIONS_AFTER_INIT, available_actions)
 
     def test_malformed_move(self):
