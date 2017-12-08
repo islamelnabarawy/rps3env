@@ -19,6 +19,7 @@ __author__ = 'Islam Elnabarawy'
 
 
 class PieceType(Enum):
+    N = -1
     U = 0
     R = 1
     P = 2

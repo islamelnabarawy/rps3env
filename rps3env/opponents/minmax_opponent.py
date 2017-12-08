@@ -27,7 +27,7 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 handler.setFormatter(logging.Formatter('%(tabs)s%(message)s'))
 logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class MinMaxOpponent(BaseOpponent):

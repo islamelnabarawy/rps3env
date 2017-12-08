@@ -18,10 +18,8 @@ import sys
 import unittest
 
 import gym
-from gym import Space
+from gym import Space, spaces
 
-# noinspection PyUnresolvedReferences
-import rps3env
 from rps3env.envs import RPS3GameEnv
 
 __author__ = 'Islam Elnabarawy'
@@ -31,52 +29,82 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 EMPTY_BOARD = """
-            ..
-         .. ..  ..
-      ..        .. ..
-   .. ..              ..
-.. ..         ..      .. ..
-   ..                    .. ..
-      .. ..              ..
-         ..        .. ..
-            .. ..  ..
-               ..
+                ..
+             .. ..  ..
+          ..        .. ..
+       .. ..              ..
+    .. ..         ..      .. ..
+       ..                    .. ..
+          .. ..              ..
+             ..        .. ..
+                .. ..  ..
+                   ..
 """
-
-EMPTY_OBSERVATION = ['0'] * 28
 
 INIT_BOARD = """
-            OP
-         OR ..  OS
-      OP        .. OR
-   OS ..              OS
-OP ..         ..      .. OR
-   PS                    .. PR
-      PP ..              PP
-         PR        .. PS
-            PS ..  PR
-               PP
+                OP
+             OR ..  OS
+          OP        .. OR
+       OS ..              OS
+    OP ..         ..      .. OR
+       PS                    .. PR
+          PP ..              PP
+             PR        .. PS
+                PS ..  PR
+                   PP
 """
 
-OBS_AFTER_BOARD_INIT = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
-                       ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU'] + \
-                       ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+OBS_BEFORE_BOARD_INIT = {
+    'occupied': [False] * 28,
+    'player_owned': [False] * 28,
+    'piece_type': [-1] * 28
+}
 
-OBS_AFTER_LEGAL_MOVE = ['0', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
-                       ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OU'] + \
-                       ['PR', '0', '0', '0', '0', '0', '0', 'OU', '0', '0']
-OBS_AFTER_CHALLENGE_WIN = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
-                          ['PS', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU'] + \
-                          ['0', '0', '0', '0', '0', '0', '0', '0', 'OU', '0']
-OBS_AFTER_CHALLENGE_TIE = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', 'PS'] + \
-                          ['OU', 'OU', 'OU', 'OU', 'OU', 'OU', '0', 'OU', 'OR'] + \
-                          ['0', '0', '0', '0', '0', '0', '0', 'OU', '0', '0']
-OBS_AFTER_CHALLENGE_LOSS = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', 'PR', 'PP', '0'] + \
-                           ['OR', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OU', 'OR'] + \
-                           ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
-OBS_AFTER_FULL_GAME = ['PR', 'PP', 'PS', 'PR', 'PP', 'PS', '0', 'PP', '0'] + \
-                      ['0', '0', '0', '0', 'PS', '0', '0', 'OU', '0'] + \
-                      ['OU', '0', '0', '0', '0', 'OS', 'OU', 'OU', 'OR', 'PR']
+OBS_AFTER_BOARD_INIT = {
+    'occupied': [True] * 18 + [False] * 10,
+    'player_owned': [True] * 9 + [False] * 19,
+    'piece_type': [1, 2, 3] * 3 + [0] * 9 + [-1] * 10
+}
+
+OBS_AFTER_LEGAL_MOVE = {
+    'occupied': [False, True, True, True, True, True, True, True, True, True, True, True, True, True, True, False, True,
+                 True, True, False, False, False, False, False, False, True, False, False],
+    'player_owned': [False, True, True, True, True, True, True, True, True, False, False, False, False, False, False,
+                     False, False, False, True, False, False, False, False, False, False, False, False, False],
+    'piece_type': [-1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 0, 1, -1, -1, -1, -1, -1, -1, 0, -1, -1]
+}
+
+OBS_AFTER_CHALLENGE_WIN = {
+    'occupied': [True, True, True, True, True, True, True, True, False, True, True, True, True, True, True, True, False,
+                 True, False, False, False, False, False, False, False, False, True, False],
+    'player_owned': [True, True, True, True, True, True, True, True, False, True, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False, False, False, False, False, False],
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 3, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1]
+}
+
+OBS_AFTER_CHALLENGE_TIE = {
+    'occupied': [True, True, True, True, True, True, True, True, True, True, True, True, True, True, True, False, True,
+                 True, False, False, False, False, False, False, False, True, False, False],
+    'player_owned': [True, True, True, True, True, True, True, True, True, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False, False, False, False, False, False],
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1]
+}
+
+OBS_AFTER_CHALLENGE_LOSS = {
+    'occupied': [True, True, True, True, True, True, True, True, False, True, True, True, True, True, True, True, True,
+                 True, False, False, False, False, False, False, False, False, False, False],
+    'player_owned': [True, True, True, True, True, True, True, True, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False, False, False, False, False, False],
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+}
+
+OBS_AFTER_FULL_GAME = {
+    'occupied': [True, True, True, True, True, True, False, True, False, False, False, False, False, True, False, False,
+                 True, False, True, False, False, False, False, True, True, True, True, True],
+    'player_owned': [True, True, True, True, True, True, False, True, False, False, False, False, False, True, False,
+                     False, False, False, False, False, False, False, False, False, False, False, False, True],
+    'piece_type': [1, 2, 3, 1, 2, 3, -1, 2, -1, -1, -1, -1, -1, 3, -1, -1, 0, -1, 0, -1, -1, -1, -1, 3, 0, 0, 1, 1]
+}
 
 
 class RPS3GameEnvTest(unittest.TestCase):
@@ -130,14 +158,15 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(0, min(self.env.action_space.low))
 
     def test_observation_space(self):
-        self.assertIsInstance(self.env.observation_space, Space)
-        self.assertEqual(2, len(self.env.observation_space.spaces))
-        self.assertEqual(28, self.env.observation_space.spaces[0].shape)
-        self.assertEqual(4, max(self.env.observation_space.spaces[0].high))
-        self.assertEqual(4, min(self.env.observation_space.spaces[0].high))
-        self.assertEqual(0, max(self.env.observation_space.spaces[0].low))
-        self.assertEqual(0, min(self.env.observation_space.spaces[0].low))
-        self.assertEqual(28, self.env.observation_space.spaces[1].n)
+        self.assertIsInstance(self.env.observation_space, spaces.Dict)
+        self.assertEqual(3, len(self.env.observation_space.spaces))
+        self.assertEqual(28, self.env.observation_space.spaces['occupied'].n)
+        self.assertEqual(28, self.env.observation_space.spaces['player_owned'].n)
+        self.assertEqual(28, self.env.observation_space.spaces['piece_type'].shape)
+        self.assertEqual(3, max(self.env.observation_space.spaces['piece_type'].high))
+        self.assertEqual(3, min(self.env.observation_space.spaces['piece_type'].high))
+        self.assertEqual(-1, max(self.env.observation_space.spaces['piece_type'].low))
+        self.assertEqual(-1, min(self.env.observation_space.spaces['piece_type'].low))
 
     def test_reward_range(self):
         self.assertEqual(-100, self.env.reward_range[0])
@@ -145,7 +174,7 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_reset(self):
         actual = self.env.reset()
-        expected = EMPTY_OBSERVATION
+        expected = OBS_BEFORE_BOARD_INIT
         self.assertEqual(expected, actual, msg='Arrays are not equal.')
 
     def test_render_empty_board(self):

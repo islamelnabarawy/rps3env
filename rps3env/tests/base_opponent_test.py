@@ -86,6 +86,7 @@ class TestMinMaxOpponentBoardHash(TestBaseOpponent):
         self.assertEqual(self.DEFAULT_GREEN_BOARD_HASH, opponent.get_board_hash())
 
 
+@unittest.skip
 class TestBaseOpponentPrintBoard(TestBaseOpponent):
 
     def test_printEmptyBoard(self):

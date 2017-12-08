@@ -27,20 +27,20 @@ from rps3env.classes import PieceType, BoardPiece, BoardLocation
 __author__ = 'Islam Elnabarawy'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 BOARD_TEMPLATE = """
-            O13
-         O12 I6  O14
-      O11        I7 O15
-   O10 I5              O16
-O9 I4         C0      I8 O17
-   O8                    I0 O0
-      O7 I3              O1
-         O6        I1 O2
-            O5 I2  O3
-               O4
+                O13
+             O12 I6  O14
+          O11        I7 O15
+       O10 I5              O16
+    O9 I4         C0      I8 O17
+       O8                    I0 O0
+          O7 I3              O1
+             O6        I1 O2
+                O5 I2  O3
+                   O4
 """
 
 
@@ -63,12 +63,13 @@ class RPS3GameEnv(gym.Env):
         return self._action_space
 
     @property
-    def observation_space(self) -> spaces.Tuple:
+    def observation_space(self) -> spaces.Dict:
         if self._observation_space is None:
-            self._observation_space = spaces.Tuple((
-                spaces.MultiDiscrete([[0, 4] for _ in range(28)]),
-                spaces.MultiBinary(28)
-            ))
+            self._observation_space = spaces.Dict([
+                ('occupied', spaces.MultiBinary(28)),
+                ('player_owned', spaces.MultiBinary(28)),
+                ('piece_type', spaces.MultiDiscrete([[-1, 3] for _ in range(28)])),
+            ])
         return self._observation_space
 
     @property
@@ -168,9 +169,19 @@ class RPS3GameEnv(gym.Env):
 
     def _get_observation(self):
         board = self.board['O'] + self.board['I'] + self.board['C']
-        obs = []
+        obs = {
+            'occupied': [location.piece is not None for location in board],
+            'player_owned': [location.piece is not None and location.piece.player_owned for location in board],
+            'piece_type': []
+        }
         for i, l in enumerate(board):
-            obs.append(str(l.piece) if l.piece is not None else '0')
+            if l.piece is None:
+                p = PieceType.N.value
+            elif not l.piece.player_owned and not l.piece.revealed:
+                p = PieceType.U.value
+            else:
+                p = l.piece.piece_type.value
+            obs['piece_type'].append(p)
         return obs
 
     def _get_opponent_layout(self):
