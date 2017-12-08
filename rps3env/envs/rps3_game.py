@@ -51,7 +51,7 @@ class RPS3GameEnv(gym.Env):
     def __init__(self) -> None:
         super().__init__()
         self._board = None  # type: dict[str, list[BoardLocation]]
-        self._turns = None  # type: int
+        self._round = None  # type: int
         self._opponent = None  # type: opponents.BaseOpponent
         self._action_space = None  # type: spaces.MultiDiscrete
         self._observation_space = None  # type: spaces.Tuple
@@ -117,7 +117,7 @@ class RPS3GameEnv(gym.Env):
             raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
         done = False
-        if self._turns < 0:
+        if self._round < 0:
             assert isinstance(action, list) and len(action) == 9
             assert action.count(PieceType.R.value) == \
                    action.count(PieceType.P.value) == \
@@ -154,13 +154,13 @@ class RPS3GameEnv(gym.Env):
                 if done:
                     reward[1] = 100 if player_won else -100
 
-        self._turns += 1
-        return self._get_observation(), reward, done, {'turn': self._turns}
+        self._round += 1
+        return self._get_observation(), reward, done, {'round': self._round}
 
     def _reset(self):
         self._init_board()
         self._init_opponent()
-        self._turns = -1
+        self._round = -1
         self._action_space = spaces.MultiDiscrete([[1, 3] for _ in range(9)])
         return self._get_observation()
 
