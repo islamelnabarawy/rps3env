@@ -176,7 +176,7 @@ class RPS3GameEnv(gym.Env):
         self._opponent = opponents.RandomOpponent()
 
     def _render(self, mode='human', close=False):
-        if close:
+        if close or mode is None:
             return
         output = BOARD_TEMPLATE
         for ring in 'OIC':
@@ -215,9 +215,9 @@ class RPS3GameEnv(gym.Env):
         return [PieceType[s] for s in layout]
 
     def _get_opponent_move(self):
-        opponent_move = self._opponent.get_next_move()
+        opponent_move = self._opponent.get_next_move().split(':')
         logger.debug("opponent move: %s", opponent_move)
-        return opponent_move.split(':')
+        return opponent_move
 
     def _opponent_apply_move(self, move, result):
         move_from = move[0]
@@ -232,9 +232,13 @@ class RPS3GameEnv(gym.Env):
                 move_data['outcome'] = 'T'  # it was a tie
                 move_data['otherHand'] = from_location.piece.piece_type.name
         else:
-            move_data['outcome'] = 'W' if result > 0 else 'L'
-            move_data['otherHand'] = from_location.piece.piece_type.name if from_location.piece is not None \
-                else to_location.piece.piece_type.name
+            if result > 0:
+                move_data['outcome'] = 'W'
+                move_data['otherHand'] = PieceType(((to_location.piece.piece_type.value + 1) % 3) + 1).name
+            else:
+                move_data['outcome'] = 'L'
+                move_data['otherHand'] = to_location.piece.piece_type.name
+
         self._opponent.apply_move(move_data)
 
     def _get_player_moves(self, player=True):
