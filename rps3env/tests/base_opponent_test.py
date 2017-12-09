@@ -16,6 +16,7 @@
 import unittest
 
 from rps3env.opponents import BaseOpponent
+from rps3env.tests.utils import captured_output
 
 __author__ = 'Islam Elnabarawy'
 
@@ -148,6 +149,12 @@ Probabilities: [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]"""
         opponent = ConcreteBaseOpponent()
         output = opponent.print_board(output=False)
         self.assertEqual(self.EMPTY_BOARD, output)
+
+    def test_outputEmptyBoard(self):
+        opponent = ConcreteBaseOpponent()
+        with captured_output() as (out, err):
+            opponent.print_board()
+        self.assertEqual(self.EMPTY_BOARD, out.getvalue().rstrip())
 
     def test_printDefaultBlueBoard(self):
         opponent = ConcreteBaseOpponent()

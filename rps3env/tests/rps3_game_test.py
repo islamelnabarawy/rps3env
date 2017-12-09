@@ -22,6 +22,7 @@ import gym
 from gym import Space, spaces
 
 from rps3env.envs import RPS3GameEnv, RPS3GameMinMaxEnv
+from rps3env.tests.utils import captured_output
 
 __author__ = 'Islam Elnabarawy'
 
@@ -208,6 +209,9 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(-100, self.env.reward_range[0])
         self.assertEqual(100, self.env.reward_range[1])
 
+    def test_step_before_reset(self):
+        self.assertRaises(ValueError, lambda: self.env.step([1, 2, 3] * 3))
+
     def test_reset(self):
         actual = self.env.reset()
         expected = OBS_BEFORE_BOARD_INIT
@@ -217,6 +221,12 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.env.reset()
         actual = self.env.render(mode='ansi')
         self.assertEqual(EMPTY_BOARD, actual)
+
+    def test_output_empty_board(self):
+        self.env.reset()
+        with captured_output() as (out, err):
+            self.env.render()
+        self.assertEqual(EMPTY_BOARD, out.getvalue().rstrip())
 
     def test_set_board(self):
         self.env.seed()
@@ -228,6 +238,9 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.init_board()
         actual = self.env.render(mode='ansi')
         self.assertEqual(INIT_BOARD, actual)
+
+    def test_pre_init_available_actions(self):
+        self.assertRaises(ValueError, lambda: self.env.available_actions)
 
     def test_init_available_actions(self):
         self.env.reset()

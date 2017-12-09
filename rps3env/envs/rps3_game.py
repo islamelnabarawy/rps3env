@@ -256,8 +256,7 @@ class RPS3GameEnv(gym.Env):
     def _get_piece_moves(self, ring, index):
         result = []
         piece = self._board[ring][index].piece
-        if piece is None:
-            return result
+        assert piece is not None
 
         def empty_or_opponent(location):
             return location.piece is None or location.piece.player_owned != piece.player_owned
