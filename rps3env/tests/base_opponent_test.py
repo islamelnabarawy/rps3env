@@ -87,20 +87,79 @@ class TestMinMaxOpponentBoardHash(TestBaseOpponent):
 
 
 class TestBaseOpponentPrintBoard(TestBaseOpponent):
+    EMPTY_BOARD = """
+                    ..
+                 .. ..  ..
+              ..        .. ..
+           .. ..              ..
+        .. ..         ..      .. ..
+           ..                    .. ..
+              .. ..              ..
+                 ..        .. ..
+                    .. ..  ..
+                       ..
+        
+Turns: 0
+Player Counts: [0, 0, 0]
+Player Reveals: [0, 0, 0]
+Opponent Captures: [0, 0, 0]
+Opponent Counts: [0, 0, 0, 0]
+Probabilities: [0.0, 0.0, 0.0]"""
+
+    DEFAULT_BLUE_BOARD = """
+                    OU
+                 OU ..  OU
+              OU        .. OU
+           OU ..              OU
+        OU ..         ..      .. OU
+           PS                    .. PR
+              PP ..              PP
+                 PR        .. PS
+                    PS ..  PR
+                       PP
+        
+Turns: 0
+Player Counts: [3, 3, 3]
+Player Reveals: [0, 0, 0]
+Opponent Captures: [0, 0, 0]
+Opponent Counts: [0, 0, 0, 9]
+Probabilities: [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]"""
+
+    DEFAULT_GREEN_BOARD = """
+                    PP
+                 PR ..  PS
+              PS        .. PR
+           PP ..              PP
+        PR ..         ..      .. PS
+           OU                    .. OU
+              OU ..              OU
+                 OU        .. OU
+                    OU ..  OU
+                       OU
+        
+Turns: 0
+Player Counts: [3, 3, 3]
+Player Reveals: [0, 0, 0]
+Opponent Captures: [0, 0, 0]
+Opponent Counts: [0, 0, 0, 9]
+Probabilities: [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]"""
 
     def test_printEmptyBoard(self):
         opponent = ConcreteBaseOpponent()
-        opponent.print_board()
+        output = opponent.print_board(output=False)
+        self.assertEqual(self.EMPTY_BOARD, output)
 
     def test_printDefaultBlueBoard(self):
         opponent = ConcreteBaseOpponent()
         opponent.init_board_layout(0)
-        opponent.print_board()
+        output = opponent.print_board(output=False)
+        self.assertEqual(self.DEFAULT_BLUE_BOARD, output)
 
     def test_printDefaultGreenBoard(self):
         opponent = ConcreteBaseOpponent()
         opponent.init_board_layout(1)
-        opponent.print_board()
+        output = opponent.print_board(output=False)
+        self.assertEqual(self.DEFAULT_GREEN_BOARD, output)
 
 
 class TestBaseOpponentDefaultBoard(TestBaseOpponent):

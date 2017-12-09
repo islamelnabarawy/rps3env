@@ -92,5 +92,8 @@ class BaseOpponent:
     def get_board_hash(self):
         return self._state.get_hash()
 
-    def print_board(self):
-        self._state.print_board()
+    def print_board(self, output=True):
+        if output:
+            print(str(self._state))
+        else:
+            return str(self._state)

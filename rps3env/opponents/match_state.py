@@ -260,8 +260,8 @@ class MatchState:
                + '-' \
                + ''.join(str(c) for c in self._captures)
 
-    def print_board(self):
-        template = """
+    def __str__(self) -> str:
+        output = """
                     O13
                  O12 I6  O14
               O11        I7 O15
@@ -276,11 +276,12 @@ class MatchState:
         for ring in self._board.keys():
             for index in range(len(self._board[ring]) - 1, -1, -1):
                 value = self._board[ring][index]
-                template = template.replace("%s%d" % (ring, index), '..' if value == '0' else value)
-        print(template)
-        print("Turns:", self._turns)
-        print("Player Counts:", self._player_counts)
-        print("Player Reveals:", self._player_reveals)
-        print("Opponent Captures:", self._captures)
-        print("Opponent Counts:", self._opponent_counts)
-        print("Probabilities:", self.get_opponent_piece_probabilities())
+                output = output.replace("%s%d" % (ring, index), '..' if value == '0' else value)
+        fmt = '\n{} {}'
+        output += fmt.format("Turns:", self._turns)
+        output += fmt.format("Player Counts:", self._player_counts)
+        output += fmt.format("Player Reveals:", self._player_reveals)
+        output += fmt.format("Opponent Captures:", self._captures)
+        output += fmt.format("Opponent Counts:", self._opponent_counts)
+        output += fmt.format("Probabilities:", self.get_opponent_piece_probabilities())
+        return output
