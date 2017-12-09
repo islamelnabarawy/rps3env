@@ -21,7 +21,7 @@ import unittest
 import gym
 from gym import Space, spaces
 
-from rps3env.envs import RPS3GameEnv
+from rps3env.envs import RPS3GameEnv, RPS3GameMinMaxEnv
 
 __author__ = 'Islam Elnabarawy'
 
@@ -164,7 +164,7 @@ class RPS3GameEnvTest(unittest.TestCase):
             reward_expected = [0, 0]
         if info_expected is None:
             info_expected = {'round': 0}
-        self.assertEqual(obs_expected, obs_actual, msg='Arrays are not equal.')
+        self.assertEqual(obs_expected, obs_actual)
         self.assertEqual(reward_expected, reward_actual)
         self.assertEqual(done_expected, done_actual)
         self.assertEqual(info_expected, info_actual)
@@ -211,7 +211,7 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_reset(self):
         actual = self.env.reset()
         expected = OBS_BEFORE_BOARD_INIT
-        self.assertEqual(expected, actual, msg='Arrays are not equal.')
+        self.assertEqual(expected, actual)
 
     def test_render_empty_board(self):
         self.env.reset()
@@ -296,3 +296,31 @@ class RPS3GameEnvTest(unittest.TestCase):
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': 10})
+
+
+class RPS3GameMinMaxEnvTest(unittest.TestCase):
+    def setUp(self):
+        self.env = gym.make('RPS3Game-v1')  # type: RPS3GameMinMaxEnv
+
+    def tearDown(self):
+        self.env.close()
+
+    def test_random_play(self):
+        self.env.reset()
+        self.env.seed(0)
+        done = False
+        reward, info = None, None
+        total_reward = 0
+        while not done:
+            logger.debug(self.env.render(mode='ansi'))
+            action = random.choice(self.env.available_actions)
+            logger.debug('Taking action: %s', action)
+            obs, reward, done, info = self.env.step(action)
+            logger.debug('Got reward: %s', reward)
+            logger.debug('Info: %s', info)
+            total_reward += sum(reward)
+        logger.debug(self.env.render(mode='ansi'))
+        logger.debug('Game over. Total reward: %d', total_reward)
+        self.assertEqual([0, -100], reward)
+        self.assertTrue(done)
+        self.assertEqual(40, info['round'])
