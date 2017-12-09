@@ -6,3 +6,5 @@ install:
 # command to run tests
 script:
   - coverage run --source=rps3env setup.py test
+after_success:
+  - coveralls
