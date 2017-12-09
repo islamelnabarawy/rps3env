@@ -187,7 +187,7 @@ class RPS3GameEnv(gym.Env):
                     '..' if location.piece is None else ('{}!' if location.piece.revealed else '{}').format(
                         location.piece.to_str(False))
                 )
-
+        output += self._opponent.print_board(output=False)
         if mode == 'human':
             print(output)
         elif mode == 'ansi':

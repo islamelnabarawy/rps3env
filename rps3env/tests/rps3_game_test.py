@@ -26,7 +26,7 @@ from rps3env.envs import RPS3GameEnv
 __author__ = 'Islam Elnabarawy'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 EMPTY_BOARD = """
@@ -40,7 +40,24 @@ EMPTY_BOARD = """
              ..        .. ..
                 .. ..  ..
                    ..
-"""
+
+                    ..
+                 .. ..  ..
+              ..        .. ..
+           .. ..              ..
+        .. ..         ..      .. ..
+           ..                    .. ..
+              .. ..              ..
+                 ..        .. ..
+                    .. ..  ..
+                       ..
+        
+Turns: 0
+Player Counts: [0, 0, 0]
+Player Reveals: [0, 0, 0]
+Opponent Captures: [0, 0, 0]
+Opponent Counts: [0, 0, 0, 0]
+Probabilities: [0.0, 0.0, 0.0]"""
 
 INIT_BOARD = """
                 OP
@@ -53,7 +70,24 @@ INIT_BOARD = """
              PR        .. PS
                 PS ..  PR
                    PP
-"""
+
+                    PP
+                 PR ..  PS
+              PP        .. PR
+           PS ..              PS
+        PP ..         ..      .. PR
+           OU                    .. OU
+              OU ..              OU
+                 OU        .. OU
+                    OU ..  OU
+                       OU
+        
+Turns: 0
+Player Counts: [3, 3, 3]
+Player Reveals: [0, 0, 0]
+Opponent Captures: [0, 0, 0]
+Opponent Counts: [0, 0, 0, 9]
+Probabilities: [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]"""
 
 OBS_BEFORE_BOARD_INIT = {
     'occupied': [False] * 28,
@@ -182,8 +216,7 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_render_empty_board(self):
         self.env.reset()
         actual = self.env.render(mode='ansi')
-        expected = EMPTY_BOARD
-        self.assertEqual(expected, actual)
+        self.assertEqual(EMPTY_BOARD, actual)
 
     def test_set_board(self):
         self.env.seed()
@@ -194,8 +227,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.env.seed(0)
         self.init_board()
         actual = self.env.render(mode='ansi')
-        expected = INIT_BOARD
-        self.assertEqual(expected, actual, msg='Arrays are not equal.')
+        self.assertEqual(INIT_BOARD, actual)
 
     def test_init_available_actions(self):
         self.env.reset()
