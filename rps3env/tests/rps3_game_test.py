@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import logging
+import random
 import sys
 import unittest
 
@@ -113,11 +114,9 @@ AVAILABLE_ACTIONS_AFTER_INIT = [
 
 class RPS3GameEnvTest(unittest.TestCase):
     def setUp(self):
-        super().setUp()
         self.env = gym.make('RPS3Game-v0')  # type: RPS3GameEnv
 
     def tearDown(self):
-        super().tearDown()
         self.env.close()
 
     def init_board(self):
@@ -201,6 +200,8 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_init_available_actions(self):
         self.env.reset()
         available_actions = self.env.available_actions
+        random.seed(0)
+        self.assertIsInstance(random.choice(available_actions), list)
         self.assertEqual(362880, len(available_actions))
 
     def test_game_available_actions(self):

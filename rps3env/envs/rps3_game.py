@@ -86,7 +86,7 @@ class RPS3GameEnv(gym.Env):
         actions = []
         if self._action_space.shape == 9:
             # board setup phase
-            actions.extend(itertools.permutations([1, 2, 3] * 3))
+            actions.extend(list(x) for x in itertools.permutations([1, 2, 3] * 3))
         else:
             # game phase
             def l2i(l):
@@ -132,6 +132,7 @@ class RPS3GameEnv(gym.Env):
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self.available_actions
             move = self._action_to_move(action)
+            logger.debug("player move: %s", move)
             reward[0] = self._make_move(move)
 
             # tell opponent about the move's result
@@ -214,9 +215,9 @@ class RPS3GameEnv(gym.Env):
         return [PieceType[s] for s in layout]
 
     def _get_opponent_move(self):
-        opponent_move = self._opponent.get_next_move().split(':')
+        opponent_move = self._opponent.get_next_move()
         logger.debug("opponent move: %s", opponent_move)
-        return opponent_move
+        return opponent_move.split(':')
 
     def _opponent_apply_move(self, move, result):
         move_from = move[0]
@@ -363,4 +364,4 @@ class RPS3GameEnv(gym.Env):
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):
     def _init_opponent(self):
-        self.opponent = opponents.MinMaxOpponent()
+        self._opponent = opponents.MinMaxOpponent()
