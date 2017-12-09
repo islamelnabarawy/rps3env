@@ -368,4 +368,4 @@ class RPS3GameEnv(gym.Env):
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):
     def _init_opponent(self):
-        self._opponent = opponents.MinMaxOpponent()
+        self._opponent = opponents.MinMaxOpponent(depth_limit=2)
