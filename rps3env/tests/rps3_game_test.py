@@ -263,7 +263,3 @@ class RPS3GameEnvTest(unittest.TestCase):
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': 10})
-
-
-if __name__ == '__main__':
-    unittest.main()
