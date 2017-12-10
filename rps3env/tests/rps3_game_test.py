@@ -319,7 +319,17 @@ class RPS3GameMinMaxEnvTest(unittest.TestCase):
     def tearDown(self):
         self.env.close()
 
-    def test_random_play(self):
+    def test_random_play_level_1(self):
+        self.play_randomly(1, 27)
+
+    def test_random_play_level_2(self):
+        self.play_randomly(2, 40)
+
+    def test_random_play_level_3(self):
+        self.play_randomly(3, 61)
+
+    def play_randomly(self, depth_limit, final_round):
+        self.env.settings['depth_limit'] = depth_limit
         self.env.reset()
         self.env.seed(0)
         done = False
@@ -337,4 +347,4 @@ class RPS3GameMinMaxEnvTest(unittest.TestCase):
         logger.debug('Game over. Total reward: %d', total_reward)
         self.assertEqual([0, -100], reward)
         self.assertTrue(done)
-        self.assertEqual(40, info['round'])
+        self.assertEqual(final_round, info['round'])

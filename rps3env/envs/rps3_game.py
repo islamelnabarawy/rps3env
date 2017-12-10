@@ -373,5 +373,13 @@ class RPS3GameEnv(gym.Env):
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):
+    def __init__(self, **kwargs) -> None:
+        super().__init__()
+        self._opponent_kwargs = kwargs
+
+    @property
+    def settings(self):
+        return self._opponent_kwargs
+
     def _init_opponent(self):
-        self._opponent = opponents.MinMaxOpponent(depth_limit=2)
+        self._opponent = opponents.MinMaxOpponent(**self._opponent_kwargs)

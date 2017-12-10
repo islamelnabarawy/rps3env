@@ -27,5 +27,7 @@ register(
 register(
     id='RPS3Game-v1',
     entry_point='rps3env.envs:RPS3GameMinMaxEnv',
-    kwargs={}
+    kwargs={
+        'depth_limit': 2
+    }
 )
