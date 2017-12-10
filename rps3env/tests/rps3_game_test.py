@@ -21,13 +21,14 @@ import unittest
 import gym
 from gym import Space, spaces
 
+import rps3env.config
 from rps3env.envs import RPS3GameEnv, RPS3GameMinMaxEnv
 from rps3env.tests.utils import captured_output
 
 __author__ = 'Islam Elnabarawy'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(rps3env.config.ENV_LOG_LEVEL)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 EMPTY_BOARD = """

@@ -17,6 +17,7 @@ import logging
 import random
 import sys
 
+import rps3env.config
 from rps3env.opponents import BaseOpponent
 
 __author__ = 'Islam Elnabarawy'
@@ -27,7 +28,7 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
 handler.setFormatter(logging.Formatter('%(tabs)s%(message)s'))
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(rps3env.config.OPPONENT_LOG_LEVEL)
 
 
 class MinMaxOpponent(BaseOpponent):

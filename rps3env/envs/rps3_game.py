@@ -22,13 +22,14 @@ import sys
 import gym
 from gym import spaces
 
+import rps3env.config
 from rps3env import opponents
 from rps3env.classes import PieceType, BoardPiece, BoardLocation
 
 __author__ = 'Islam Elnabarawy'
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(rps3env.config.ENV_LOG_LEVEL)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 BOARD_TEMPLATE = """
