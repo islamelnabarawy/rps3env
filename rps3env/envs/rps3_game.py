@@ -136,7 +136,7 @@ class RPS3GameEnv(gym.Env):
             reward[0] = self._make_move(move)
 
             # tell opponent about the move's result
-            self._opponent_apply_move(move, reward[0])
+            self._opponent_apply_move(move, reward[0], player=True)
 
             # check game over condition
             done, player_won = self._is_game_over()
@@ -148,7 +148,7 @@ class RPS3GameEnv(gym.Env):
                 reward[1] = -self._make_move(move)
 
                 # tell opponent about the move's result
-                self._opponent_apply_move(move, -reward[1])
+                self._opponent_apply_move(move, -reward[1], player=False)
 
                 # check game over condition
                 done, player_won = self._is_game_over()
@@ -219,7 +219,7 @@ class RPS3GameEnv(gym.Env):
         logger.debug("opponent move: %s", opponent_move)
         return opponent_move
 
-    def _opponent_apply_move(self, move, result):
+    def _opponent_apply_move(self, move, result, player):
         move_from = move[0]
         move_to = move[1]
         from_location = self._board[move_from[0]][int(move_from[1:])]
@@ -234,10 +234,16 @@ class RPS3GameEnv(gym.Env):
         else:
             if result > 0:
                 move_data['outcome'] = 'W'
-                move_data['otherHand'] = PieceType(((to_location.piece.piece_type.value + 1) % 3) + 1).name
+                if player:
+                    move_data['otherHand'] = to_location.piece.piece_type.name
+                else:
+                    move_data['otherHand'] = PieceType(((to_location.piece.piece_type.value + 1) % 3) + 1).name
             else:
                 move_data['outcome'] = 'L'
-                move_data['otherHand'] = to_location.piece.piece_type.name
+                if player:
+                    move_data['otherHand'] = PieceType(((to_location.piece.piece_type.value + 1) % 3) + 1).name
+                else:
+                    move_data['otherHand'] = to_location.piece.piece_type.name
 
         self._opponent.apply_move(move_data)
 
