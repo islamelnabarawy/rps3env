@@ -359,6 +359,7 @@ class TestBaseOpponentApplyMovePlayer(TestBaseOpponent):
         opponent.apply_move(move)
         self.assertEqual('0', opponent.board['O'][0])
         self.assertEqual('PR!', opponent.board['O'][17])
+        self.assertEqual(opponent._state.player_counts, [3, 3, 3])
         self.assertEqual(opponent.captures, [0, 0, 1])
 
     def test_applyPlayerChallengeLoss(self):
@@ -373,6 +374,8 @@ class TestBaseOpponentApplyMovePlayer(TestBaseOpponent):
         opponent.apply_move(move)
         self.assertEqual('0', opponent.board['O'][0])
         self.assertEqual('OP', opponent.board['O'][17])
+        self.assertEqual(opponent._state.player_counts, [2, 3, 3])
+        self.assertEqual(opponent.captures, [0, 0, 0])
 
     def test_applyPlayerSurrender(self):
         opponent = ConcreteBaseOpponent()
