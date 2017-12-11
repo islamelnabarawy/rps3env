@@ -16,6 +16,7 @@
 import logging
 import random
 import sys
+from collections import OrderedDict
 
 import rps3env.config
 from rps3env.opponents import BaseOpponent
@@ -59,24 +60,21 @@ class MinMaxOpponent(BaseOpponent):
         return '%s%s:%s%s' % (move[0] + move[1])
 
     def print_history_table(self):
-        for state_hash, moves in self.history_table.items():
-            print(state_hash)
-            for m, s in moves.iteritems():
-                print('\t', m, ':', s)
+        print(self.get_history_table())
 
-    def get_history_table_as_string(self):
+    def get_history_table(self):
         output = ''
         for state_hash, moves in self.history_table.items():
             output += state_hash + '\n\t'
-            for m, s in moves.iteritems():
-                output += self.get_move_code(m) + '=' + str(s) + ' '
+            for m, s in moves.items():
+                output += self.get_move_code(m) + '=' + str(s) + '\n'
             output += '\n'
-        return output
+        return output.rstrip()
 
     def __init__(self, depth_limit=4, heuristic_weights=(3, 1, -3), iterative=True):
         super(MinMaxOpponent, self).__init__()
         self.depth_limit = depth_limit
-        self.history_table = {}
+        self.history_table = OrderedDict()
         self.heuristic_weights = heuristic_weights
         self.iterative_deepening = iterative
 

@@ -312,6 +312,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         for move in moves:
             self.env.step(move)
         obs, reward, done, info = self.env.step((21, 27))
+        self.env.render()
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': 10})
@@ -324,19 +325,36 @@ class RPS3GameMinMaxEnvTest(unittest.TestCase):
     def tearDown(self):
         self.env.close()
 
-    def test_random_play_level_1(self):
-        self.play_randomly(1, 27)
+    def test_random_play_level_1_1(self):
+        self.play_randomly(0, 1, 27)
 
-    def test_random_play_level_2(self):
-        self.play_randomly(2, 40)
+    def test_random_play_level_1_2(self):
+        self.play_randomly(3, 1, 38)
 
-    def test_random_play_level_3(self):
-        self.play_randomly(3, 61)
+    def test_random_play_level_2_1(self):
+        self.play_randomly(0, 2, 40)
 
-    def play_randomly(self, depth_limit, final_round):
+    def test_random_play_level_2_2(self):
+        self.play_randomly(2, 2, 45)
+
+    def test_random_play_level_3_1(self):
+        self.play_randomly(0, 3, 61)
+
+    def test_random_play_level_3_2(self):
+        self.play_randomly(3, 3, 43)
+
+    def test_history_table_printing(self):
+        self.play_randomly(0, 1, 27)
+        with captured_output() as (out, err):
+            self.env._opponent.print_history_table()
+        as_str = self.env._opponent.get_history_table()
+        as_out = out.getvalue().rstrip()
+        self.assertEqual(as_out, as_str)
+
+    def play_randomly(self, seed, depth_limit, final_round):
         self.env.settings['depth_limit'] = depth_limit
         self.env.reset()
-        self.env.seed(0)
+        self.env.seed(seed)
         done = False
         reward, info = None, None
         total_reward = 0

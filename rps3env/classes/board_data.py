@@ -33,9 +33,6 @@ class BoardPiece(object):
         self._player_owned = player_owned
         self._revealed = revealed
 
-    def __str__(self) -> str:
-        return self.to_str()
-
     def to_str(self, hidden=True):
         if self._player_owned:
             return 'P' + self._piece_type.name
