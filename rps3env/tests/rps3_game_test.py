@@ -20,6 +20,7 @@ import unittest
 
 import gym
 from gym import Space, spaces
+from pyglet.window import NoSuchDisplayException
 
 import rps3env.config
 from rps3env.envs import RPS3GameEnv, RPS3GameMinMaxEnv
@@ -243,6 +244,15 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_render_human(self):
         self.env.seed(0)
         self.init_board()
+        try:
+            self.env.render(mode='human')
+        except NoSuchDisplayException:
+            self.skipTest("No display to render window.")
+        done = False
+        while not done:
+            self.env.render(mode='human')
+            action = random.choice(self.env.available_actions)
+            obs, reward, done, info = self.env.step(action)
         self.env.render(mode='human')
 
     def test_pre_init_available_actions(self):
@@ -312,7 +322,6 @@ class RPS3GameEnvTest(unittest.TestCase):
         for move in moves:
             self.env.step(move)
         obs, reward, done, info = self.env.step((21, 27))
-        self.env.render()
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': 10})
