@@ -226,7 +226,7 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_output_empty_board(self):
         self.env.reset()
         with captured_output() as (out, err):
-            self.env.render()
+            self.env.render(mode='console')
         self.assertEqual(EMPTY_BOARD, out.getvalue().rstrip())
 
     def test_set_board(self):

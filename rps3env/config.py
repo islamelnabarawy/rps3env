@@ -19,3 +19,5 @@ __author__ = 'Islam Elnabarawy'
 
 ENV_LOG_LEVEL = logging.INFO
 OPPONENT_LOG_LEVEL = logging.INFO
+VIEWER_WIDTH = 700
+VIEWER_HEIGHT = 700

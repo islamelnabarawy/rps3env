@@ -20,7 +20,9 @@ import random
 import sys
 
 import gym
+import pyglet
 from gym import spaces
+from pyglet import gl
 
 import rps3env.config
 from rps3env import opponents
@@ -45,18 +47,28 @@ BOARD_TEMPLATE = """
                    O4
 """
 
+BOARD_POSITIONS = {
+    'O': [(560, 260), (530, 180), (480, 110), (410, 60), (320, 40), (230, 50), (150, 85), (80, 160), (45, 250),
+          (40, 340), (70, 420), (120, 490), (190, 540), (285, 565), (375, 550), (460, 510), (520, 440), (560, 350)],
+    'I': [(475, 300), (440, 190), (345, 130), (220, 145), (135, 235), (135, 360), (200, 445), (320, 475), (440, 420)],
+    'C': [(300, 300)]
+}
+
 
 class RPS3GameEnv(gym.Env):
-    metadata = {'render.modes': [None, 'human', 'ansi']}
+    metadata = {'render.modes': [None, 'human', 'console', 'ansi']}
 
     def __init__(self) -> None:
         super().__init__()
         self._board = None  # type: dict[str, list[BoardLocation]]
         self._round = None  # type: int
+        self._game_over = None  # type: bool
+        self._player_won = None  # type: bool
         self._opponent = None  # type: opponents.BaseOpponent
         self._action_space = None  # type: spaces.MultiDiscrete
         self._observation_space = None  # type: spaces.Tuple
         self._reward_range = None  # type: (int, int)
+        self._window = None  # type: pyglet.window
 
     @property
     def action_space(self) -> spaces.MultiDiscrete:
@@ -84,6 +96,8 @@ class RPS3GameEnv(gym.Env):
     def available_actions(self):
         if self._board is None:
             raise ValueError("The environment has not been initialized. Please call reset() first.")
+        if self._game_over:
+            raise ValueError("The current episode is over. Please call reset() to start a new episode.")
         actions = []
         if self._action_space.shape == 9:
             # board setup phase
@@ -117,7 +131,7 @@ class RPS3GameEnv(gym.Env):
         if self._board is None:
             raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
-        done = False
+        self._game_over = False
         if self._round < 0:
             assert isinstance(action, list) and len(action) == 9
             assert action.count(PieceType.R.value) == \
@@ -140,9 +154,9 @@ class RPS3GameEnv(gym.Env):
             self._opponent_apply_move(move, reward[0], player=True)
 
             # check game over condition
-            done, player_won = self._is_game_over()
-            if done:
-                reward[0] = 100 if player_won else -100
+            self._game_over, self._player_won = self._is_game_over()
+            if self._game_over:
+                reward[0] = 100 if self._player_won else -100
             else:
                 # make a move for the opponent
                 move = self._get_opponent_move()
@@ -152,17 +166,19 @@ class RPS3GameEnv(gym.Env):
                 self._opponent_apply_move(move, -reward[1], player=False)
 
                 # check game over condition
-                done, player_won = self._is_game_over()
-                if done:
-                    reward[1] = 100 if player_won else -100
+                self._game_over, self._player_won = self._is_game_over()
+                if self._game_over:
+                    reward[1] = 100 if self._player_won else -100
 
         self._round += 1
-        return self._get_observation(), reward, done, {'round': self._round}
+        return self._get_observation(), reward, self._game_over, {'round': self._round}
 
     def _reset(self):
         self._init_board()
         self._init_opponent()
         self._round = -1
+        self._game_over = False
+        self._player_won = False
         self._action_space = spaces.MultiDiscrete([[1, 3] for _ in range(9)])
         return self._get_observation()
 
@@ -177,8 +193,23 @@ class RPS3GameEnv(gym.Env):
         self._opponent = opponents.RandomOpponent()
 
     def _render(self, mode='human', close=False):
-        if close or mode is None:
+        if close:
+            if self._window is not None:
+                self._window.close()
+                self._window = None
             return
+        if mode == 'ansi':
+            return self._get_text_output()
+        if mode == 'console':
+            print(self._get_text_output())
+            return
+        if mode == 'human':
+            self._render_viewer()
+            return
+        return super().render(mode=mode)
+
+
+    def _get_text_output(self):
         output = BOARD_TEMPLATE
         for ring in 'OIC':
             for index in range(len(self._board[ring]) - 1, -1, -1):
@@ -189,10 +220,7 @@ class RPS3GameEnv(gym.Env):
                         location.piece.to_str(False))
                 )
         output += self._opponent.print_board(output=False)
-        if mode == 'human':
-            print(output)
-        elif mode == 'ansi':
-            return output
+        return output
 
     def _get_observation(self):
         board = self._board['O'] + self._board['I'] + self._board['C']
@@ -370,6 +398,46 @@ class RPS3GameEnv(gym.Env):
             return 'C0'
 
         return tuple(i2l(i) for i in action)
+
+    def _render_viewer(self):
+        if self._window is None:
+            self._init_viewer()
+        gl.glClearColor(1, 1, 1, 1)
+        self._window.clear()
+        self._window.switch_to()
+        self._window.dispatch_events()
+        board_offset_x = 50
+        board_offset_y = 50
+        self.bg.blit(board_offset_x, board_offset_y, width=600, height=600)
+        for l in [location for location in self._board['O'] + self._board['I'] + self._board['C']
+                  if location.piece is not None]:
+            self._draw_location(l, offset_x=board_offset_x, offset_y=board_offset_y)
+        if self._game_over:
+            txt = "Game Over! {} won.".format('Player' if self._player_won else 'Opponent')
+            label = pyglet.text.Label(
+                txt, font_name='Arial', font_size=32, anchor_x='center', anchor_y='center',
+                x=350, y=30, color=(0, 0, 0, 255)
+            )
+            label.draw()
+        self._window.flip()
+
+    def _draw_location(self, location: BoardLocation, offset_x=0, offset_y=0):
+        assert location.piece is not None
+        x, y = BOARD_POSITIONS[location.ring][location.index]
+        color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
+        txt = ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(False))
+        label = pyglet.text.Label(
+            txt, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+            x=x + offset_x, y=y + offset_y, color=color
+        )
+        label.draw()
+
+    def _init_viewer(self):
+        self._window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
+        self.bg = pyglet.resource.image('rps3env/assets/board.png')
+
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):
