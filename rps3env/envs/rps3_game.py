@@ -208,7 +208,6 @@ class RPS3GameEnv(gym.Env):
             return
         return super().render(mode=mode)
 
-
     def _get_text_output(self):
         output = BOARD_TEMPLATE
         for ring in 'OIC':
@@ -408,7 +407,7 @@ class RPS3GameEnv(gym.Env):
         self._window.dispatch_events()
         board_offset_x = 50
         board_offset_y = 50
-        self.bg.blit(board_offset_x, board_offset_y, width=600, height=600)
+        self._bg.blit(board_offset_x, board_offset_y, width=600, height=600)
         for l in [location for location in self._board['O'] + self._board['I'] + self._board['C']
                   if location.piece is not None]:
             self._draw_location(l, offset_x=board_offset_x, offset_y=board_offset_y)
@@ -433,8 +432,9 @@ class RPS3GameEnv(gym.Env):
         label.draw()
 
     def _init_viewer(self):
+        import os
+        self._bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
         self._window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
-        self.bg = pyglet.resource.image('rps3env/assets/board.png')
 
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)

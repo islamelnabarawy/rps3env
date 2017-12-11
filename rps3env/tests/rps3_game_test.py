@@ -240,6 +240,11 @@ class RPS3GameEnvTest(unittest.TestCase):
         actual = self.env.render(mode='ansi')
         self.assertEqual(INIT_BOARD, actual)
 
+    def test_render_human(self):
+        self.env.seed(0)
+        self.init_board()
+        self.env.render(mode='human')
+
     def test_pre_init_available_actions(self):
         self.assertRaises(ValueError, lambda: self.env.available_actions)
 
