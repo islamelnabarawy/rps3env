@@ -20,7 +20,6 @@ import unittest
 
 import gym
 from gym import Space, spaces
-from pyglet.window import NoSuchDisplayException
 
 import rps3env.config
 from rps3env.envs import RPS3GameEnv, RPS3GameMinMaxEnv
@@ -246,8 +245,8 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.init_board()
         try:
             self.env.render(mode='human')
-        except NoSuchDisplayException:
-            self.skipTest("No display to render window.")
+        except:
+            self.skipTest("Window rendering failed. Probably no valid display to draw on.")
         done = False
         while not done:
             self.env.render(mode='human')

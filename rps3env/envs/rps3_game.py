@@ -20,9 +20,7 @@ import random
 import sys
 
 import gym
-import pyglet
 from gym import spaces
-from pyglet import gl
 
 import rps3env.config
 from rps3env import opponents
@@ -399,18 +397,39 @@ class RPS3GameEnv(gym.Env):
         return tuple(i2l(i) for i in action)
 
     def _render_viewer(self):
+        import pyglet
+        from pyglet import gl
+
         if self._window is None:
-            self._init_viewer()
+            import os
+            self._bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
+            self._window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
+
+            gl.glEnable(gl.GL_BLEND)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
         gl.glClearColor(1, 1, 1, 1)
         self._window.clear()
         self._window.switch_to()
         self._window.dispatch_events()
         board_offset_x = 50
         board_offset_y = 50
+
+        def draw_location(location: BoardLocation):
+            assert location.piece is not None
+            x, y = BOARD_POSITIONS[location.ring][location.index]
+            color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
+            pyglet.text.Label(
+                ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(False)), font_name='Arial',
+                font_size=28, anchor_x='center', anchor_y='center', x=x + board_offset_x, y=y + board_offset_y,
+                color=color
+            ).draw()
+
         self._bg.blit(board_offset_x, board_offset_y, width=600, height=600)
         for l in [location for location in self._board['O'] + self._board['I'] + self._board['C']
                   if location.piece is not None]:
-            self._draw_location(l, offset_x=board_offset_x, offset_y=board_offset_y)
+            draw_location(l)
+
         if self._game_over:
             txt = "Game Over! {} won.".format('Player' if self._player_won else 'Opponent')
             label = pyglet.text.Label(
@@ -418,26 +437,8 @@ class RPS3GameEnv(gym.Env):
                 x=350, y=30, color=(0, 0, 0, 255)
             )
             label.draw()
+
         self._window.flip()
-
-    def _draw_location(self, location: BoardLocation, offset_x=0, offset_y=0):
-        assert location.piece is not None
-        x, y = BOARD_POSITIONS[location.ring][location.index]
-        color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
-        txt = ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(False))
-        label = pyglet.text.Label(
-            txt, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
-            x=x + offset_x, y=y + offset_y, color=color
-        )
-        label.draw()
-
-    def _init_viewer(self):
-        import os
-        self._bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
-        self._window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
-
-        gl.glEnable(gl.GL_BLEND)
-        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):
