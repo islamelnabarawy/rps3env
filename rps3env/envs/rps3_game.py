@@ -54,7 +54,7 @@ BOARD_POSITIONS = {
 
 
 class RPS3GameEnv(gym.Env):
-    metadata = {'render.modes': [None, 'human', 'console', 'ansi']}
+    metadata = {'render.modes': [None, 'human', 'console', 'ansi', 'rgb_array']}
 
     def __init__(self) -> None:
         super().__init__()
@@ -204,6 +204,8 @@ class RPS3GameEnv(gym.Env):
         if mode == 'human':
             self._render_viewer()
             return
+        if mode == 'rgb_array':
+            return self._render_viewer(True)
         return super().render(mode=mode)
 
     def _get_text_output(self):
@@ -396,7 +398,8 @@ class RPS3GameEnv(gym.Env):
 
         return tuple(i2l(i) for i in action)
 
-    def _render_viewer(self):
+    def _render_viewer(self, return_rgb_array=False):
+        import numpy as np
         import pyglet
         from pyglet import gl
 
@@ -438,7 +441,16 @@ class RPS3GameEnv(gym.Env):
             )
             label.draw()
 
+        arr = None
+        if return_rgb_array:
+            buffer = pyglet.image.get_buffer_manager().get_color_buffer()
+            arr = np.fromstring(buffer.get_image_data().data, dtype=np.uint8, sep='')
+            arr = arr.reshape(buffer.height, buffer.width, 4)
+            arr = arr[::-1, :, 0:3]
+
         self._window.flip()
+
+        return arr
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):

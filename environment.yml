@@ -4,3 +4,4 @@ dependencies:
 - pip:
   - gym
   - pyglet
+  - numpy
