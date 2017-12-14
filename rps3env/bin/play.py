@@ -21,7 +21,7 @@ import numpy as np
 import pyglet
 from numpy.linalg import norm
 from pyglet import gl
-from pyglet.window import mouse
+from pyglet.window import mouse, key
 
 # noinspection PyUnresolvedReferences
 import rps3env
@@ -91,12 +91,14 @@ class RPS3Game(object):
         self.current_point = None
         self.initial_setup = [1, 2, 3] * 3
 
+        cwd = os.path.dirname(__file__)
+
         self.window = pyglet.window.Window(width=config.VIEWER_WIDTH, height=config.VIEWER_HEIGHT)
-        self.bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
-        self.circle_empty = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle_empty.png'))
+        self.bg = pyglet.image.load(os.path.join(cwd, '../assets/board.png'))  # type: pyglet.image.Texture
+        self.circle_empty = pyglet.image.load(os.path.join(cwd, '../assets/circle_empty.png'))
         self.circle_empty.anchor_x = SELECTION_RADIUS
         self.circle_empty.anchor_y = SELECTION_RADIUS
-        self.circle_filled = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle_filled.png'))
+        self.circle_filled = pyglet.image.load(os.path.join(cwd, '../assets/circle_filled.png'))
         self.circle_filled.anchor_x = SELECTION_RADIUS
         self.circle_filled.anchor_y = SELECTION_RADIUS
 
@@ -107,15 +109,28 @@ class RPS3Game(object):
         self.window.on_mouse_press = self._on_mouse_press
         self.window.on_mouse_release = self._on_mouse_release
         self.window.on_mouse_drag = self._on_mouse_drag
+        self.window.on_key_release = self._on_key_release
         self.window.on_close = self._on_close
 
     def _on_draw(self):
         gl.glClearColor(1, 1, 1, 1)
         self.window.clear()
 
-        self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
-
         if not self.game_started:
+            bg = self.bg.get_region(0, 0, width=self.bg.width, height=self.bg.height // 2)
+            bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=300)
+
+            pyglet.text.Label(
+                "Drag and drop to order your pieces.",
+                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+                x=350, y=550, color=(255, 0, 0, 255)
+            ).draw()
+            pyglet.text.Label(
+                "Press Enter to start match.",
+                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+                x=350, y=500, color=(255, 0, 0, 255)
+            ).draw()
+
             for index in range(9):
                 x, y = BOARD_POSITIONS['O'][index]
                 if self.current_selection is not None:
@@ -132,9 +147,12 @@ class RPS3Game(object):
                 x, y = self.current_point
                 draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.initial_setup[self.current_selection], True)
         else:
+            self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
+
             for index in [i for i in range(28) if self.obs['occupied'][i]]:
                 ring, index = i2l(index)
-                draw_piece(ring, index, self.obs['piece_type'][index], self.obs['player_owned'][index])
+                x, y = BOARD_POSITIONS[ring][index]
+                draw_piece(x, y, self.obs['piece_type'][index], self.obs['player_owned'][index])
 
         if self.game_over:
             txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
@@ -173,6 +191,11 @@ class RPS3Game(object):
             return
         if self.current_selection is not None:
             self.current_point = (x, y)
+
+    def _on_key_release(self, symbol, modifiers):
+        if not self.game_started and symbol in [key.ENTER, key.RETURN]:
+            self.obs, self.last_reward, self.game_over, self.info = self.env.step(self.initial_setup)
+            self.game_started = True
 
     def _on_close(self):
         self.env.close()
