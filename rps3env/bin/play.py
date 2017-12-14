@@ -33,7 +33,7 @@ SELECTION_RADIUS = 50
 __author__ = 'Islam Elnabarawy'
 
 
-class PlayGame(object):
+class RPS3Game(object):
     def __init__(self) -> None:
         self.env = gym.make('RPS3Game-v1')  # type: envs.RPS3GameEnv
         self.env.seed(0)
@@ -115,7 +115,7 @@ class PlayGame(object):
 
 
 def main():
-    PlayGame().run()
+    RPS3Game().run()
 
 
 if __name__ == '__main__':
