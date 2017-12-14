@@ -24,8 +24,8 @@ from pyglet.window import mouse, key
 
 # noinspection PyUnresolvedReferences
 import rps3env
-from rps3env import envs
-from rps3env.classes import BoardLocation
+from rps3env import envs, config
+from rps3env.classes import PieceType
 from rps3env.envs.rps3_game import BOARD_POSITIONS
 
 SELECTION_RADIUS = 50
@@ -37,9 +37,12 @@ class PlayGame(object):
     def __init__(self) -> None:
         self.env = gym.make('RPS3Game-v1')  # type: envs.RPS3GameEnv
         self.env.seed(0)
-        self.env.reset()
+        self.obs = self.env.reset()
+        self.game_over = False
+        self.last_reward = [0, 0]
+        self.info = {}
 
-        self.window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
+        self.window = pyglet.window.Window(width=config.VIEWER_WIDTH, height=config.VIEWER_HEIGHT)
         self.bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
         self.circle = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle.png'))
 
@@ -65,23 +68,28 @@ class PlayGame(object):
         #         self.circle.blit(x + SELECTION_RADIUS // 2, y + SELECTION_RADIUS // 2,
         #                          width=SELECTION_RADIUS, height=SELECTION_RADIUS)
 
-        def draw_location(location: BoardLocation):
-            assert location.piece is not None
-            x, y = BOARD_POSITIONS[location.ring][location.index]
-            color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
-            text = ('{}!' if location.piece.player_owned and location.piece.revealed else '{}').format(
-                location.piece.to_str(True))
+        def i2l(i):
+            if i < 18: return 'O', i
+            if i < 27: return 'I', i - 18
+            return 'C', 0
+
+        def draw_location(i):
+            ring, index = i2l(i)
+            piece_type = PieceType(self.obs['piece_type'][i])
+            player_owned = self.obs['player_owned'][i]
+            x, y = BOARD_POSITIONS[ring][index]
+            color = (0, 0, 255, 255) if player_owned else (255, 0, 0, 255)
+            text = piece_type.name
             pyglet.text.Label(
                 text, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
                 x=x + board_offset_x, y=y + board_offset_y, color=color
             ).draw()
 
-        for l in [location for location in self.env._board['O'] + self.env._board['I'] + self.env._board['C']
-                  if location.piece is not None]:
-            draw_location(l)
+        for i in [i for i in range(28) if self.obs['occupied'][i]]:
+            draw_location(i)
 
-        if self.env._game_over:
-            txt = "Game Over! {} won.".format('Player' if self.env._player_won else 'Opponent')
+        if self.game_over:
+            txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
             pyglet.text.Label(
                 txt, font_name='Arial', font_size=32, anchor_x='center', anchor_y='center',
                 x=350, y=30, color=(0, 0, 0, 255)
@@ -98,10 +106,9 @@ class PlayGame(object):
             print('Mouse release at', (x, y))
 
     def _on_key_release(self, symbol, modifiers):
-        if symbol == key.ENTER:
-            if self.env._game_over:
-                self.env.reset()
-            self.env.step(random.choice(self.env.available_actions))
+        if symbol == key.ENTER and not self.game_over:
+            action = random.choice(self.env.available_actions)
+            self.obs, self.last_reward, self.game_over, self.info = self.env.step(action)
 
     def run(self):
         pyglet.app.run()
