@@ -15,21 +15,42 @@
 """
 
 import os
-import random
 
 import gym
 import pyglet
 from pyglet import gl
-from pyglet.window import mouse, key
+from pyglet.window import mouse
 
 # noinspection PyUnresolvedReferences
 import rps3env
 from rps3env import envs, config
 from rps3env.envs.rps3_game import BOARD_POSITIONS
 
-SELECTION_RADIUS = 50
-
 __author__ = 'Islam Elnabarawy'
+
+SELECTION_RADIUS = 60
+
+BOARD_OFFSET_X = 50
+BOARD_OFFSET_Y = 50
+
+
+def draw_circle(img: pyglet.image, x: int, y: int):
+    img.blit(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y, width=SELECTION_RADIUS, height=SELECTION_RADIUS)
+
+
+def i2l(i):
+    if i < 18: return 'O', i
+    if i < 27: return 'I', i - 18
+    return 'C', 0
+
+
+def draw_piece(x, y, piece_type, player_owned):
+    color = (0, 0, 255, 255) if player_owned else (255, 0, 0, 255)
+    text = '?RPS'[piece_type]
+    pyglet.text.Label(
+        text, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+        x=x + BOARD_OFFSET_X, y=y + BOARD_OFFSET_Y, color=color
+    ).draw()
 
 
 class RPS3Game(object):
@@ -41,9 +62,16 @@ class RPS3Game(object):
         self.last_reward = [0, 0]
         self.info = {}
 
+        self.game_started = False
+        self.current_selection = None
+        self.current_point = None
+        self.initial_setup = [1, 2, 3] * 3
+
         self.window = pyglet.window.Window(width=config.VIEWER_WIDTH, height=config.VIEWER_HEIGHT)
         self.bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
         self.circle = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle.png'))
+        self.circle.anchor_x = SELECTION_RADIUS // 2
+        self.circle.anchor_y = SELECTION_RADIUS // 2
 
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
@@ -51,41 +79,31 @@ class RPS3Game(object):
         self.window.on_draw = self._on_draw
         self.window.on_mouse_press = self._on_mouse_press
         self.window.on_mouse_release = self._on_mouse_release
-        self.window.on_key_release = self._on_key_release
+        self.window.on_mouse_drag = self._on_mouse_drag
         self.window.on_close = self._on_close
 
     def _on_draw(self):
         gl.glClearColor(1, 1, 1, 1)
         self.window.clear()
 
-        board_offset_x = 50
-        board_offset_y = 50
-        self.bg.blit(board_offset_x, board_offset_y, width=600, height=600)
+        self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
 
-        # for r in 'OIC':
-        #     for i, p in enumerate(BOARD_POSITIONS[r]):
-        #         x, y = p
-        #         self.circle.blit(x + SELECTION_RADIUS // 2, y + SELECTION_RADIUS // 2,
-        #                          width=SELECTION_RADIUS, height=SELECTION_RADIUS)
-
-        def i2l(i):
-            if i < 18: return 'O', i
-            if i < 27: return 'I', i - 18
-            return 'C', 0
-
-        def draw_location(i):
-            ring, index = i2l(i)
-            player_owned = self.obs['player_owned'][i]
-            x, y = BOARD_POSITIONS[ring][index]
-            color = (0, 0, 255, 255) if player_owned else (255, 0, 0, 255)
-            text = '?OIV'[self.obs['piece_type'][i]]
-            pyglet.text.Label(
-                text, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
-                x=x + board_offset_x, y=y + board_offset_y, color=color
-            ).draw()
-
-        for i in [i for i in range(28) if self.obs['occupied'][i]]:
-            draw_location(i)
+        if not self.game_started:
+            for index in range(9):
+                x, y = BOARD_POSITIONS['O'][index]
+                if self.current_selection is not None:
+                    if self.current_selection == index:
+                        continue
+                    else:
+                        draw_circle(self.circle, x, y)
+                draw_piece(x, y, self.initial_setup[index], True)
+            if self.current_selection is not None:
+                x, y = self.current_point
+                draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.initial_setup[self.current_selection], True)
+        else:
+            for index in [i for i in range(28) if self.obs['occupied'][i]]:
+                ring, index = i2l(index)
+                draw_piece(ring, index, self.obs['piece_type'][index], self.obs['player_owned'][index])
 
         if self.game_over:
             txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
@@ -97,17 +115,34 @@ class RPS3Game(object):
         self.window.flip()
 
     def _on_mouse_press(self, x, y, button, modifiers):
-        if button == mouse.LEFT:
-            print('Mouse press at', (x, y))
+        if button != mouse.LEFT:
+            return
+        if not self.game_started:
+            # find the point being selected
+            for i in range(9):
+                ring, index = i2l(i)
+                x_cell, y_cell = BOARD_POSITIONS[ring][index]
+                x_cell += BOARD_OFFSET_X
+                y_cell += BOARD_OFFSET_Y
+                if abs(x - x_cell) <= SELECTION_RADIUS and abs(y - y_cell) <= SELECTION_RADIUS:
+                    self.current_selection = i
+                    self.current_point = (x, y)
+                    return
+        else:
+            pass
 
     def _on_mouse_release(self, x, y, button, modifiers):
-        if button == mouse.LEFT:
-            print('Mouse release at', (x, y))
+        if button != mouse.LEFT:
+            return
+        if not self.game_started:
+            self.current_selection = None
+            self.current_point = None
 
-    def _on_key_release(self, symbol, modifiers):
-        if symbol == key.ENTER and not self.game_over:
-            action = random.choice(self.env.available_actions)
-            self.obs, self.last_reward, self.game_over, self.info = self.env.step(action)
+    def _on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        if not buttons & mouse.LEFT:
+            return
+        if self.current_selection is not None:
+            self.current_point = (x, y)
 
     def _on_close(self):
         self.env.close()
