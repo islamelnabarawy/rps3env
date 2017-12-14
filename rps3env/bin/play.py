@@ -25,7 +25,6 @@ from pyglet.window import mouse, key
 # noinspection PyUnresolvedReferences
 import rps3env
 from rps3env import envs, config
-from rps3env.classes import PieceType
 from rps3env.envs.rps3_game import BOARD_POSITIONS
 
 SELECTION_RADIUS = 50
@@ -75,11 +74,10 @@ class RPS3Game(object):
 
         def draw_location(i):
             ring, index = i2l(i)
-            piece_type = PieceType(self.obs['piece_type'][i])
             player_owned = self.obs['player_owned'][i]
             x, y = BOARD_POSITIONS[ring][index]
             color = (0, 0, 255, 255) if player_owned else (255, 0, 0, 255)
-            text = piece_type.name
+            text = '?OIV'[self.obs['piece_type'][i]]
             pyglet.text.Label(
                 text, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
                 x=x + board_offset_x, y=y + board_offset_y, color=color
