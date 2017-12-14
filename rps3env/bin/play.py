@@ -52,6 +52,7 @@ class RPS3Game(object):
         self.window.on_mouse_press = self._on_mouse_press
         self.window.on_mouse_release = self._on_mouse_release
         self.window.on_key_release = self._on_key_release
+        self.window.on_close = self._on_close
 
     def _on_draw(self):
         gl.glClearColor(1, 1, 1, 1)
@@ -107,6 +108,10 @@ class RPS3Game(object):
         if symbol == key.ENTER and not self.game_over:
             action = random.choice(self.env.available_actions)
             self.obs, self.last_reward, self.game_over, self.info = self.env.step(action)
+
+    def _on_close(self):
+        self.env.close()
+        self.window.close()
 
     def run(self):
         pyglet.app.run()
