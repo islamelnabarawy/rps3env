@@ -17,7 +17,9 @@
 import os
 
 import gym
+import numpy as np
 import pyglet
+from numpy.linalg import norm
 from pyglet import gl
 from pyglet.window import mouse
 
@@ -28,14 +30,14 @@ from rps3env.envs.rps3_game import BOARD_POSITIONS
 
 __author__ = 'Islam Elnabarawy'
 
-SELECTION_RADIUS = 60
+SELECTION_RADIUS = 30
 
 BOARD_OFFSET_X = 50
 BOARD_OFFSET_Y = 50
 
 
 def draw_circle(img: pyglet.image, x: int, y: int):
-    img.blit(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y, width=SELECTION_RADIUS, height=SELECTION_RADIUS)
+    img.blit(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y, width=SELECTION_RADIUS * 2, height=SELECTION_RADIUS * 2)
 
 
 def i2l(i):
@@ -51,6 +53,28 @@ def draw_piece(x, y, piece_type, player_owned):
         text, font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
         x=x + BOARD_OFFSET_X, y=y + BOARD_OFFSET_Y, color=color
     ).draw()
+
+
+def find_cell(x, y, start=0, stop=9, skip=None):
+    found_index = None
+    found_point = None
+    # find the point being selected
+    for i in range(start, stop):
+        if skip is not None and i in skip:
+            continue
+        ring, index = i2l(i)
+        x_cell = BOARD_POSITIONS[ring][index][0] + BOARD_OFFSET_X
+        y_cell = BOARD_POSITIONS[ring][index][1] + BOARD_OFFSET_Y
+        if within_radius(x, y, x_cell, y_cell):
+            found_index = i
+            found_point = (x, y)
+            break
+    return found_index, found_point
+
+
+def within_radius(x_1, y_1, x_2, y_2):
+    return abs(norm(np.array((x_1, y_1)) - np.array((x_2, y_2)))) <= SELECTION_RADIUS
+    # return (abs(x_1 - x_2) <= SELECTION_RADIUS) and (abs(y_1 - y_2) <= SELECTION_RADIUS)
 
 
 class RPS3Game(object):
@@ -69,9 +93,12 @@ class RPS3Game(object):
 
         self.window = pyglet.window.Window(width=config.VIEWER_WIDTH, height=config.VIEWER_HEIGHT)
         self.bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
-        self.circle = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle.png'))
-        self.circle.anchor_x = SELECTION_RADIUS // 2
-        self.circle.anchor_y = SELECTION_RADIUS // 2
+        self.circle_empty = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle_empty.png'))
+        self.circle_empty.anchor_x = SELECTION_RADIUS
+        self.circle_empty.anchor_y = SELECTION_RADIUS
+        self.circle_filled = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/circle_filled.png'))
+        self.circle_filled.anchor_x = SELECTION_RADIUS
+        self.circle_filled.anchor_y = SELECTION_RADIUS
 
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
@@ -95,7 +122,11 @@ class RPS3Game(object):
                     if self.current_selection == index:
                         continue
                     else:
-                        draw_circle(self.circle, x, y)
+                        if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
+                                         self.current_point[0], self.current_point[1]):
+                            draw_circle(self.circle_filled, x, y)
+                        else:
+                            draw_circle(self.circle_empty, x, y)
                 draw_piece(x, y, self.initial_setup[index], True)
             if self.current_selection is not None:
                 x, y = self.current_point
@@ -118,23 +149,22 @@ class RPS3Game(object):
         if button != mouse.LEFT:
             return
         if not self.game_started:
-            # find the point being selected
-            for i in range(9):
-                ring, index = i2l(i)
-                x_cell, y_cell = BOARD_POSITIONS[ring][index]
-                x_cell += BOARD_OFFSET_X
-                y_cell += BOARD_OFFSET_Y
-                if abs(x - x_cell) <= SELECTION_RADIUS and abs(y - y_cell) <= SELECTION_RADIUS:
-                    self.current_selection = i
-                    self.current_point = (x, y)
-                    return
+            found_index, found_point = find_cell(x, y)
+            self.current_selection = found_index
+            self.current_point = found_point
         else:
             pass
 
     def _on_mouse_release(self, x, y, button, modifiers):
         if button != mouse.LEFT:
             return
-        if not self.game_started:
+        if not self.game_started and self.current_selection is not None:
+            # check to see if the piece was dropped over another piece
+            found_index, found_point = find_cell(x, y, skip=[self.current_selection])
+            if found_index is not None:
+                # swap the two pieces
+                self.initial_setup[found_index], self.initial_setup[self.current_selection] = \
+                    self.initial_setup[self.current_selection], self.initial_setup[found_index]
             self.current_selection = None
             self.current_point = None
 
