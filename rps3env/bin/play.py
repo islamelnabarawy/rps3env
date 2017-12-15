@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-
+import argparse
 import os
 
 import gym
@@ -78,8 +78,12 @@ def within_radius(x_1, y_1, x_2, y_2):
 
 
 class RPS3Game(object):
-    def __init__(self) -> None:
-        self.env = gym.make('RPS3Game-v1')  # type: envs.RPS3GameEnv
+    def __init__(self, difficulty=2) -> None:
+        if difficulty <= 0:
+            self.env = gym.make('RPS3Game-v0')  # type: envs.RPS3GameEnv
+        else:
+            self.env = gym.make('RPS3Game-v1')  # type: envs.RPS3GameMinMaxEnv
+            self.env.settings['depth_limit'] = difficulty
         self.env.seed(0)
         self.obs = self.env.reset()
         self.game_over = False
@@ -235,7 +239,11 @@ class RPS3Game(object):
 
 
 def main():
-    RPS3Game().run()
+    parser = argparse.ArgumentParser(description='Play through the game environment using human control.')
+    parser.add_argument("--difficulty", type=int, default=2, choices=range(10), help="Difficulty level; 0 is random.")
+    args = parser.parse_args()
+
+    RPS3Game(args.difficulty).run()
 
 
 if __name__ == '__main__':
