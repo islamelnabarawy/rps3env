@@ -143,16 +143,32 @@ class RPS3Game(object):
                         else:
                             draw_circle(self.circle_empty, x, y)
                 draw_piece(x, y, self.initial_setup[index], True)
+
             if self.current_selection is not None:
                 x, y = self.current_point
                 draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.initial_setup[self.current_selection], True)
         else:
             self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
 
-            for index in [i for i in range(28) if self.obs['occupied'][i]]:
-                ring, index = i2l(index)
-                x, y = BOARD_POSITIONS[ring][index]
-                draw_piece(x, y, self.obs['piece_type'][index], self.obs['player_owned'][index])
+            available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection]
+            for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:
+                r, i = i2l(index)
+                x, y = BOARD_POSITIONS[r][i]
+                if self.current_selection is not None:
+                    if self.current_selection == index:
+                        continue
+                    elif index in available_spots:
+                        if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
+                                         self.current_point[0], self.current_point[1]):
+                            draw_circle(self.circle_filled, x, y)
+                        else:
+                            draw_circle(self.circle_empty, x, y)
+                if self.obs['occupied'][index]:
+                    draw_piece(x, y, self.obs['piece_type'][index], self.obs['player_owned'][index])
+
+            if self.current_selection is not None:
+                x, y = self.current_point
+                draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.obs['piece_type'][self.current_selection], True)
 
         if self.game_over:
             txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
@@ -170,19 +186,31 @@ class RPS3Game(object):
             found_index, found_point = find_cell(x, y)
             self.current_selection = found_index
             self.current_point = found_point
-        else:
-            pass
+        elif not self.game_over:
+            skip = [i for i in range(28) if not self.obs['player_owned'][i]]
+            found_index, found_point = find_cell(x, y, stop=28, skip=skip)
+            self.current_selection = found_index
+            self.current_point = found_point
 
     def _on_mouse_release(self, x, y, button, modifiers):
         if button != mouse.LEFT:
             return
-        if not self.game_started and self.current_selection is not None:
-            # check to see if the piece was dropped over another piece
-            found_index, found_point = find_cell(x, y, skip=[self.current_selection])
-            if found_index is not None:
-                # swap the two pieces
-                self.initial_setup[found_index], self.initial_setup[self.current_selection] = \
-                    self.initial_setup[self.current_selection], self.initial_setup[found_index]
+        if self.current_selection is not None:
+            if not self.game_started:
+                # check to see if the piece was dropped over another piece
+                found_index, found_point = find_cell(x, y, skip=[self.current_selection])
+                if found_index is not None:
+                    # swap the two pieces
+                    self.initial_setup[found_index], self.initial_setup[self.current_selection] = \
+                        self.initial_setup[self.current_selection], self.initial_setup[found_index]
+            else:
+                # check to see if the piece was dropped over a legal spot
+                available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection]
+                skip = [i for i in range(28) if i not in available_spots]
+                found_index, found_point = find_cell(x, y, stop=28, skip=skip)
+                if found_index is not None:
+                    self.obs, self.last_reward, self.game_over, self.info = \
+                        self.env.step((self.current_selection, found_index))
             self.current_selection = None
             self.current_point = None
 
