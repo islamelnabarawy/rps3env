@@ -1,0 +1,4 @@
+[run]
+omit =
+    # files in bin folder
+    rps3env/bin/*
