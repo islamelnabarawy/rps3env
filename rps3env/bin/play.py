@@ -78,13 +78,13 @@ def within_radius(x_1, y_1, x_2, y_2):
 
 
 class RPS3Game(object):
-    def __init__(self, difficulty=2) -> None:
+    def __init__(self, difficulty=2, random_seed=None) -> None:
         if difficulty <= 0:
             self.env = gym.make('RPS3Game-v0')  # type: envs.RPS3GameEnv
         else:
             self.env = gym.make('RPS3Game-v1')  # type: envs.RPS3GameMinMaxEnv
             self.env.settings['depth_limit'] = difficulty
-        self.env.seed(0)
+        self.env.seed(random_seed)
         self.obs = self.env.reset()
         self.game_over = False
         self.last_reward = [0, 0]
@@ -241,9 +241,10 @@ class RPS3Game(object):
 def main():
     parser = argparse.ArgumentParser(description='Play through the game environment using human control.')
     parser.add_argument("--difficulty", type=int, default=2, choices=range(10), help="Difficulty level; 0 is random.")
+    parser.add_argument("--random-seed", type=int, default=None, help="Seed for the random number generator.")
     args = parser.parse_args()
 
-    RPS3Game(args.difficulty).run()
+    RPS3Game(args.difficulty, args.random_seed).run()
 
 
 if __name__ == '__main__':
