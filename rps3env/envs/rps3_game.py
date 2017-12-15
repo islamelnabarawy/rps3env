@@ -129,6 +129,8 @@ class RPS3GameEnv(gym.Env):
         if self._board is None:
             raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
+        player_move = None
+        opponent_move = None
         self._game_over = False
         if self._round < 0:
             assert isinstance(action, list) and len(action) == 9
@@ -144,12 +146,12 @@ class RPS3GameEnv(gym.Env):
         else:
             assert isinstance(action, tuple) and len(action) == 2
             assert action in self.available_actions
-            move = self._action_to_move(action)
-            logger.debug("player move: %s", move)
-            reward[0] = self._make_move(move)
+            player_move = self._action_to_move(action)
+            logger.debug("player move: %s", player_move)
+            reward[0] = self._make_move(player_move)
 
             # tell opponent about the move's result
-            self._opponent_apply_move(move, reward[0], player=True)
+            self._opponent_apply_move(player_move, reward[0], player=True)
 
             # check game over condition
             self._game_over, self._player_won = self._is_game_over()
@@ -157,11 +159,11 @@ class RPS3GameEnv(gym.Env):
                 reward[0] = 100 if self._player_won else -100
             else:
                 # make a move for the opponent
-                move = self._get_opponent_move()
-                reward[1] = -self._make_move(move)
+                opponent_move = self._get_opponent_move()
+                reward[1] = -self._make_move(opponent_move)
 
                 # tell opponent about the move's result
-                self._opponent_apply_move(move, -reward[1], player=False)
+                self._opponent_apply_move(opponent_move, -reward[1], player=False)
 
                 # check game over condition
                 self._game_over, self._player_won = self._is_game_over()
@@ -169,7 +171,8 @@ class RPS3GameEnv(gym.Env):
                     reward[1] = 100 if self._player_won else -100
 
         self._round += 1
-        return self._get_observation(), reward, self._game_over, {'round': self._round}
+        info = {'round': self._round, 'player_move': player_move, 'opponent_move': opponent_move}
+        return self._get_observation(), reward, self._game_over, info
 
     def _reset(self):
         self._init_board()

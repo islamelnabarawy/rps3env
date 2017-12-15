@@ -154,6 +154,17 @@ class RPS3Game(object):
         else:
             self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
 
+            if 'round' in self.info and self.info['round'] > 0:
+                txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
+                if self.info['opponent_move'] is not None:
+                    txt += ", {} > {}".format(*self.info['opponent_move'])
+                else:
+                    txt += ' - Game Over.'
+                pyglet.text.Label(
+                    txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='center',
+                    x=10, y=config.VIEWER_HEIGHT - 30, color=(0, 0, 0, 255)
+                ).draw()
+
             available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
                 if not self.game_over else []
             for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:

@@ -182,12 +182,12 @@ class RPS3GameEnvTest(unittest.TestCase):
                     obs_expected, reward_expected=None, done_expected=False, info_expected=None):
         if reward_expected is None:
             reward_expected = [0, 0]
-        if info_expected is None:
-            info_expected = {'round': 0}
         self.assertEqual(obs_expected, obs_actual)
         self.assertEqual(reward_expected, reward_actual)
         self.assertEqual(done_expected, done_actual)
-        self.assertEqual(info_expected, info_actual)
+        if info_expected is not None:
+            for k in info_expected.keys():
+                self.assertEqual(info_expected[k], info_actual[k])
 
     def test_initializable(self):
         self.assertIsNotNone(self.env, msg='gym.make() returned None.')
