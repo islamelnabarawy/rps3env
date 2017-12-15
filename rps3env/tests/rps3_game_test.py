@@ -261,10 +261,7 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_render_human(self):
         self.env.seed(0)
         self.init_board()
-        try:
-            self.env.render(mode='human')
-        except:
-            self.fail("Window rendering failed. Probably no valid display to draw on.")
+        self.env.render(mode='human')
         done = False
         while not done:
             self.env.render(mode='human')
@@ -275,10 +272,7 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_render_rgb_array(self):
         self.env.seed(0)
         self.init_board()
-        try:
-            self.env.render(mode='rgb_array')
-        except:
-            self.fail("Window rendering failed. Probably no valid display to draw on.")
+        self.env.render(mode='rgb_array')
         done = False
         while not done:
             self.env.render(mode='rgb_array')
