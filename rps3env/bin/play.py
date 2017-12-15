@@ -150,7 +150,8 @@ class RPS3Game(object):
         else:
             self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
 
-            available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection]
+            available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
+                if not self.game_over else []
             for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:
                 r, i = i2l(index)
                 x, y = BOARD_POSITIONS[r][i]
