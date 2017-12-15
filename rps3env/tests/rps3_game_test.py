@@ -143,6 +143,24 @@ OBS_AFTER_FULL_GAME = {
     'piece_type': [1, 2, 3, 1, 2, 3, -1, 2, -1, -1, -1, -1, -1, 3, -1, -1, 0, -1, 0, -1, -1, -1, -1, 3, 0, 0, 1, 1]
 }
 
+OBS_AFTER_TAKE_ALL_PIECES = {
+    'occupied': [False, False, True, False, True, True, True, True, False, False, False, False, False, False, False,
+                 False, False, True, False, False, False, False, False, False, True, False, False, False],
+    'piece_type': [-1, -1, 3, -1, 2, 3, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 2, -1, -1,
+                   -1],
+    'player_owned': [False, False, True, False, True, True, True, True, False, False, False, False, False, False, False,
+                     False, False, True, False, False, False, False, False, False, True, False, False, False]
+}
+
+OBS_AFTER_LOSE_ALL_PIECES = {
+    'occupied': [True, False, False, False, False, False, False, True, False, False, False, True, False, True, False,
+                 False, True, True, False, False, False, False, False, True, False, False, False, False],
+    'piece_type': [1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, 0, -1, 0, -1, -1, 0, 1, -1, -1, -1, -1, -1, 2, -1, -1, -1,
+                   -1],
+    'player_owned': [False, False, False, False, False, False, False, False, False, False, False, False, False, False,
+                     False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+}
+
 AVAILABLE_ACTIONS_AFTER_INIT = [
     (0, 17), (0, 18), (1, 18), (2, 19), (3, 19), (4, 20), (5, 20), (6, 21), (7, 21), (8, 9), (8, 22)
 ]
@@ -349,6 +367,32 @@ class RPS3GameEnvTest(unittest.TestCase):
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_FULL_GAME,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': 10})
+
+    def test_full_game_take_all_pieces(self):
+        self.env.seed(0)
+        self.env.reset()
+        self.env.step([2, 1, 3, 1, 2, 3, 1, 2, 3])
+        moves = [(0, 17), (1, 18), (18, 26), (26, 16), (16, 26), (26, 25), (17, 16), (16, 15), (25, 14), (8, 22),
+                 (22, 23), (23, 11), (11, 23), (23, 24), (24, 13), (13, 24), (3, 19), (19, 18), (18, 26), (26, 17),
+                 (15, 25)]
+        for move in moves:
+            self.env.step(move)
+        obs, reward, done, info = self.env.step((25, 24))
+        self.step_assert(obs, reward, done, info, OBS_AFTER_TAKE_ALL_PIECES,
+                         reward_expected=[100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
+
+    def test_full_game_lose_all_pieces(self):
+        self.env.seed(0)
+        self.env.reset()
+        self.env.step([3, 2, 1, 3, 2, 1, 3, 2, 1])
+        moves = [(0, 17), (8, 9), (3, 19), (19, 27), (27, 25), (7, 21), (21, 27), (1, 18), (18, 27), (4, 20), (20, 21),
+                 (2, 19), (19, 27), (6, 7), (5, 6), (7, 8), (8, 22), (6, 7), (7, 8), (8, 9), (22, 27), (9, 22),
+                 (22, 23), (27, 26)]
+        for move in moves:
+            self.env.step(move)
+        obs, reward, done, info = self.env.step((26, 17))
+        self.step_assert(obs, reward, done, info, OBS_AFTER_LOSE_ALL_PIECES,
+                         reward_expected=[-100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
 
 
 class RPS3GameMinMaxEnvTest(unittest.TestCase):
