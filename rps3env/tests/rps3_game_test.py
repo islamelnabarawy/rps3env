@@ -246,13 +246,31 @@ class RPS3GameEnvTest(unittest.TestCase):
         try:
             self.env.render(mode='human')
         except:
-            self.skipTest("Window rendering failed. Probably no valid display to draw on.")
+            self.fail("Window rendering failed. Probably no valid display to draw on.")
         done = False
         while not done:
             self.env.render(mode='human')
             action = random.choice(self.env.available_actions)
             obs, reward, done, info = self.env.step(action)
         self.env.render(mode='human')
+
+    def test_render_rgb_array(self):
+        self.env.seed(0)
+        self.init_board()
+        try:
+            self.env.render(mode='rgb_array')
+        except:
+            self.fail("Window rendering failed. Probably no valid display to draw on.")
+        done = False
+        while not done:
+            self.env.render(mode='rgb_array')
+            action = random.choice(self.env.available_actions)
+            obs, reward, done, info = self.env.step(action)
+        self.env.render(mode='rgb_array')
+
+    def test_render_invalid_mode(self):
+        self.init_board()
+        self.assertRaises(gym.error.UnsupportedMode, lambda: self.env.render('invalid'))
 
     def test_pre_init_available_actions(self):
         self.assertRaises(ValueError, lambda: self.env.available_actions)
@@ -268,6 +286,13 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.init_board()
         available_actions = self.env.available_actions
         self.assertEqual(AVAILABLE_ACTIONS_AFTER_INIT, available_actions)
+
+    def test_post_game_available_actions(self):
+        self.init_board()
+        done = False
+        while not done:
+            _, _, done, _ = self.env.step(random.choice(self.env.available_actions))
+        self.assertRaises(ValueError, lambda: self.env.available_actions)
 
     def test_malformed_move(self):
         self.env.seed(0)

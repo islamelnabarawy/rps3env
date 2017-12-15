@@ -66,7 +66,7 @@ class RPS3GameEnv(gym.Env):
         self._action_space = None  # type: spaces.MultiDiscrete
         self._observation_space = None  # type: spaces.Tuple
         self._reward_range = None  # type: (int, int)
-        self._window = None  # type: pyglet.window
+        self._window = None
 
     @property
     def action_space(self) -> spaces.MultiDiscrete:
@@ -119,7 +119,7 @@ class RPS3GameEnv(gym.Env):
             try:
                 from os import urandom as _urandom
                 seed = int.from_bytes(_urandom(2500), 'big')
-            except NotImplementedError:
+            except NotImplementedError:  # pragma: no cover
                 import time
                 seed = int(time.time() * 256)
         random.seed(seed)
@@ -206,7 +206,6 @@ class RPS3GameEnv(gym.Env):
             return
         if mode == 'rgb_array':
             return self._render_viewer(True)
-        return super().render(mode=mode)
 
     def _get_text_output(self):
         output = BOARD_TEMPLATE
@@ -406,7 +405,10 @@ class RPS3GameEnv(gym.Env):
         if self._window is None:
             import os
             self._bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
-            self._window = pyglet.window.Window(width=rps3env.config.VIEWER_WIDTH, height=rps3env.config.VIEWER_HEIGHT)
+            self._window = pyglet.window.Window(
+                width=rps3env.config.VIEWER_WIDTH,
+                height=rps3env.config.VIEWER_HEIGHT
+            )  # type: pyglet.window
 
             gl.glEnable(gl.GL_BLEND)
             gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
