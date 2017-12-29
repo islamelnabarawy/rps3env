@@ -169,15 +169,9 @@ class RPS3Game(object):
         self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
 
         if 'round' in self.info and self.info['round'] > 0:
-            txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
-            if self.info['opponent_move'] is not None:
-                txt += ", {} > {}".format(*self.info['opponent_move'])
-            else:
-                txt += ' - Game Over.'
-            pyglet.text.Label(
-                txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='center',
-                x=10, y=config.VIEWER_HEIGHT - 30, color=(0, 0, 0, 255)
-            ).draw()
+            self._draw_round_info()
+
+        self._draw_captures()
 
         available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
             if not self.game_over else []
@@ -199,6 +193,59 @@ class RPS3Game(object):
         if self.current_selection is not None:
             x, y = self.current_point
             draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.obs['piece_type'][self.current_selection], True)
+
+    def _draw_round_info(self):
+        txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
+        if self.info['opponent_move'] is not None:
+            txt += ", {} > {}".format(*self.info['opponent_move'])
+        else:
+            txt += ' - Game Over.'
+        pyglet.text.Label(
+            txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='top',
+            x=10, y=config.VIEWER_HEIGHT - 10, color=(0, 0, 0, 255)
+        ).draw()
+
+    def _draw_captures(self):
+        pyglet.text.Label(
+            'Captures:',
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='top',
+            x=config.VIEWER_WIDTH - 20, y=config.VIEWER_HEIGHT - 50, color=(0, 0, 255, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} R'.format(self.obs['player_captures'][0]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='top',
+            x=config.VIEWER_WIDTH - 20, y=config.VIEWER_HEIGHT - 80, color=(0, 0, 255, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} P'.format(self.obs['player_captures'][1]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='top',
+            x=config.VIEWER_WIDTH - 20, y=config.VIEWER_HEIGHT - 110, color=(0, 0, 255, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} S'.format(self.obs['player_captures'][2]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='top',
+            x=config.VIEWER_WIDTH - 20, y=config.VIEWER_HEIGHT - 140, color=(0, 0, 255, 255)
+        ).draw()
+        pyglet.text.Label(
+            'Captures:',
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='bottom',
+            x=config.VIEWER_WIDTH - 20, y=140, color=(255, 0, 0, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} R'.format(self.obs['opponent_captures'][0]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='bottom',
+            x=config.VIEWER_WIDTH - 20, y=110, color=(255, 0, 0, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} P'.format(self.obs['opponent_captures'][1]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='bottom',
+            x=config.VIEWER_WIDTH - 20, y=80, color=(255, 0, 0, 255)
+        ).draw()
+        pyglet.text.Label(
+            '{} S'.format(self.obs['opponent_captures'][2]),
+            font_name='Arial', font_size=16, anchor_x='right', anchor_y='bottom',
+            x=config.VIEWER_WIDTH - 20, y=50, color=(255, 0, 0, 255)
+        ).draw()
 
     def _draw_game_over(self):
         txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
