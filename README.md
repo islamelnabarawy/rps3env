@@ -5,9 +5,24 @@ https://travis-ci.org/islamelnabarawy/rps3env) [![Coverage Status](
 https://coveralls.io/repos/github/islamelnabarawy/rps3env/badge.svg?branch=master&random=a83n0wd)](
 https://coveralls.io/github/islamelnabarawy/rps3env?branch=master)
 
+
 ## Description
 
 This repository contains an OpenAI Gym environment for the (Rock, Paper, Scissors)^3 turn-based strategy game.
+
+
+## Installation:
+
+After cloning the repository, you can use the environment in one of two ways:
+
+1. Add the directory where you cloned the repo to your `PYTHON_PATH`
+2. Install the package in development mode using pip: `pip install -e .`
+
+If you use the first option, you need to manually make sure the dependencies are installed.
+
+The second option will install the package into your `pip` environment
+as a link to the directory, so it will reflect the changes when
+you `git pull` or make any changes to the code.
 
 
 ## Copyright Notice
