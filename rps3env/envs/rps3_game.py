@@ -81,6 +81,8 @@ class RPS3GameEnv(gym.Env):
                 ('occupied', spaces.MultiBinary(28)),
                 ('player_owned', spaces.MultiBinary(28)),
                 ('piece_type', spaces.MultiDiscrete([[-1, 3] for _ in range(28)])),
+                ('player_captures', spaces.MultiDiscrete([[0, 3] for _ in range(3)])),
+                ('opponent_captures', spaces.MultiDiscrete([[0, 3] for _ in range(3)])),
             ])
         return self._observation_space
 
@@ -228,8 +230,14 @@ class RPS3GameEnv(gym.Env):
         obs = {
             'occupied': [location.piece is not None for location in board],
             'player_owned': [location.piece is not None and location.piece.player_owned for location in board],
-            'piece_type': []
+            'piece_type': [PieceType.N.value] * 28,
+            'player_captures': [0, 0, 0],
+            'opponent_captures': [0, 0, 0],
         }
+        if self._round < 0:
+            return obs
+        player_counts = [0, 0, 0]
+        opponent_counts = [0, 0, 0]
         for i, l in enumerate(board):
             if l.piece is None:
                 p = PieceType.N.value
@@ -237,7 +245,14 @@ class RPS3GameEnv(gym.Env):
                 p = PieceType.U.value
             else:
                 p = l.piece.piece_type.value
-            obs['piece_type'].append(p)
+            obs['piece_type'][i] = p
+            if l.piece is not None:
+                if l.piece.player_owned:
+                    player_counts[l.piece.piece_type.value - 1] += 1
+                else:
+                    opponent_counts[l.piece.piece_type.value - 1] += 1
+        obs['player_captures'] = [3 - x for x in player_counts]
+        obs['opponent_captures'] = [3 - x for x in opponent_counts]
         return obs
 
     def _get_opponent_layout(self):

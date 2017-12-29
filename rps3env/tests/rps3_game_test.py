@@ -94,13 +94,17 @@ Probabilities: [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]"""
 OBS_BEFORE_BOARD_INIT = {
     'occupied': [False] * 28,
     'player_owned': [False] * 28,
-    'piece_type': [-1] * 28
+    'piece_type': [-1] * 28,
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 0, 0],
 }
 
 OBS_AFTER_BOARD_INIT = {
     'occupied': [True] * 18 + [False] * 10,
     'player_owned': [True] * 9 + [False] * 19,
-    'piece_type': [1, 2, 3] * 3 + [0] * 9 + [-1] * 10
+    'piece_type': [1, 2, 3] * 3 + [0] * 9 + [-1] * 10,
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 0, 0],
 }
 
 OBS_AFTER_LEGAL_MOVE = {
@@ -108,7 +112,9 @@ OBS_AFTER_LEGAL_MOVE = {
                  True, True, False, False, False, False, False, False, True, False, False],
     'player_owned': [False, True, True, True, True, True, True, True, True, False, False, False, False, False, False,
                      False, False, False, True, False, False, False, False, False, False, False, False, False],
-    'piece_type': [-1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 0, 1, -1, -1, -1, -1, -1, -1, 0, -1, -1]
+    'piece_type': [-1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 0, 1, -1, -1, -1, -1, -1, -1, 0, -1, -1],
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 0, 0],
 }
 
 OBS_AFTER_CHALLENGE_WIN = {
@@ -116,7 +122,9 @@ OBS_AFTER_CHALLENGE_WIN = {
                  True, False, False, False, False, False, False, False, False, True, False],
     'player_owned': [True, True, True, True, True, True, True, True, False, True, False, False, False, False, False,
                      False, False, False, False, False, False, False, False, False, False, False, False, False],
-    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 3, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1]
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 3, 0, 0, 0, 0, 0, 0, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1],
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 1, 0],
 }
 
 OBS_AFTER_CHALLENGE_TIE = {
@@ -124,7 +132,9 @@ OBS_AFTER_CHALLENGE_TIE = {
                  True, False, False, False, False, False, False, False, True, False, False],
     'player_owned': [True, True, True, True, True, True, True, True, True, False, False, False, False, False, False,
                      False, False, False, False, False, False, False, False, False, False, False, False, False],
-    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1]
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, 3, 0, 0, 0, 0, 0, 0, -1, 0, 1, -1, -1, -1, -1, -1, -1, -1, 0, -1, -1],
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 0, 0],
 }
 
 OBS_AFTER_CHALLENGE_LOSS = {
@@ -132,7 +142,9 @@ OBS_AFTER_CHALLENGE_LOSS = {
                  True, False, False, False, False, False, False, False, False, False, False],
     'player_owned': [True, True, True, True, True, True, True, True, False, False, False, False, False, False, False,
                      False, False, False, False, False, False, False, False, False, False, False, False, False],
-    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+    'piece_type': [1, 2, 3, 1, 2, 3, 1, 2, -1, 1, 0, 0, 0, 0, 0, 0, 0, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+    'player_captures': [0, 0, 1],
+    'opponent_captures': [0, 0, 0],
 }
 
 OBS_AFTER_FULL_GAME = {
@@ -140,7 +152,9 @@ OBS_AFTER_FULL_GAME = {
                  True, False, True, False, False, False, False, True, True, True, True, True],
     'player_owned': [True, True, True, True, True, True, False, True, False, False, False, False, False, True, False,
                      False, False, False, False, False, False, False, False, False, False, False, False, True],
-    'piece_type': [1, 2, 3, 1, 2, 3, -1, 2, -1, -1, -1, -1, -1, 3, -1, -1, 0, -1, 0, -1, -1, -1, -1, 3, 0, 0, 1, 1]
+    'piece_type': [1, 2, 3, 1, 2, 3, -1, 2, -1, -1, -1, -1, -1, 3, -1, -1, 0, -1, 0, -1, -1, -1, -1, 3, 0, 0, 1, 1],
+    'player_captures': [0, 0, 0],
+    'opponent_captures': [0, 3, 0],
 }
 
 OBS_AFTER_TAKE_ALL_PIECES = {
@@ -149,7 +163,9 @@ OBS_AFTER_TAKE_ALL_PIECES = {
     'piece_type': [-1, -1, 3, -1, 2, 3, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1, -1, -1, -1, -1, -1, 2, -1, -1,
                    -1],
     'player_owned': [False, False, True, False, True, True, True, True, False, False, False, False, False, False, False,
-                     False, False, True, False, False, False, False, False, False, True, False, False, False]
+                     False, False, True, False, False, False, False, False, False, True, False, False, False],
+    'player_captures': [1, 0, 1],
+    'opponent_captures': [3, 3, 3],
 }
 
 OBS_AFTER_LOSE_ALL_PIECES = {
@@ -158,7 +174,9 @@ OBS_AFTER_LOSE_ALL_PIECES = {
     'piece_type': [1, -1, -1, -1, -1, -1, -1, 3, -1, -1, -1, 0, -1, 0, -1, -1, 0, 1, -1, -1, -1, -1, -1, 2, -1, -1, -1,
                    -1],
     'player_owned': [False, False, False, False, False, False, False, False, False, False, False, False, False, False,
-                     False, False, False, False, False, False, False, False, False, False, False, False, False, False]
+                     False, False, False, False, False, False, False, False, False, False, False, False, False, False],
+    'player_captures': [3, 3, 3],
+    'opponent_captures': [0, 2, 0],
 }
 
 AVAILABLE_ACTIONS_AFTER_INIT = [
@@ -215,14 +233,28 @@ class RPS3GameEnvTest(unittest.TestCase):
 
     def test_observation_space(self):
         self.assertIsInstance(self.env.observation_space, spaces.Dict)
-        self.assertEqual(3, len(self.env.observation_space.spaces))
-        self.assertEqual(28, self.env.observation_space.spaces['occupied'].n)
-        self.assertEqual(28, self.env.observation_space.spaces['player_owned'].n)
-        self.assertEqual(28, self.env.observation_space.spaces['piece_type'].shape)
-        self.assertEqual(3, max(self.env.observation_space.spaces['piece_type'].high))
-        self.assertEqual(3, min(self.env.observation_space.spaces['piece_type'].high))
-        self.assertEqual(-1, max(self.env.observation_space.spaces['piece_type'].low))
-        self.assertEqual(-1, min(self.env.observation_space.spaces['piece_type'].low))
+        obs_sp = self.env.observation_space.spaces
+        self.assertEqual(5, len(obs_sp))
+        self.assertEqual(28, obs_sp['occupied'].n)
+        self.assertEqual(28, obs_sp['player_owned'].n)
+        piece_type = obs_sp['piece_type']
+        self.assertEqual(28, piece_type.shape)
+        self.assertEqual(3, max(piece_type.high))
+        self.assertEqual(3, min(piece_type.high))
+        self.assertEqual(-1, max(piece_type.low))
+        self.assertEqual(-1, min(piece_type.low))
+        player_captures = obs_sp['player_captures']
+        self.assertEqual(3, player_captures.shape)
+        self.assertEqual(3, max(player_captures.high))
+        self.assertEqual(3, min(player_captures.high))
+        self.assertEqual(0, max(player_captures.low))
+        self.assertEqual(0, min(player_captures.low))
+        opponent_captures = obs_sp['opponent_captures']
+        self.assertEqual(3, opponent_captures.shape)
+        self.assertEqual(3, max(opponent_captures.high))
+        self.assertEqual(3, min(opponent_captures.high))
+        self.assertEqual(0, max(opponent_captures.low))
+        self.assertEqual(0, min(opponent_captures.low))
 
     def test_reward_range(self):
         self.assertEqual(-100, self.env.reward_range[0])
@@ -372,6 +404,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         for move in moves:
             self.env.step(move)
         obs, reward, done, info = self.env.step((25, 24))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_TAKE_ALL_PIECES,
                          reward_expected=[100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
 
@@ -385,6 +418,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         for move in moves:
             self.env.step(move)
         obs, reward, done, info = self.env.step((26, 17))
+
         self.step_assert(obs, reward, done, info, OBS_AFTER_LOSE_ALL_PIECES,
                          reward_expected=[-100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
 
