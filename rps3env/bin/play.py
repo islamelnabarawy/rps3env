@@ -28,6 +28,11 @@ import rps3env
 from rps3env import envs, config
 from rps3env.envs.rps3_game import BOARD_POSITIONS
 
+FILE_DIR = os.path.dirname(__file__)
+BACKGROUND_FILENAME = os.path.join(FILE_DIR, '../assets/board.png')
+EMPTY_CIRCLE_FILENAME = os.path.join(FILE_DIR, '../assets/circle_empty.png')
+FILLED_CIRCLE_FILENAME = os.path.join(FILE_DIR, '../assets/circle_filled.png')
+
 __author__ = 'Islam Elnabarawy'
 
 SELECTION_RADIUS = 30
@@ -95,14 +100,12 @@ class RPS3Game(object):
         self.current_point = None
         self.initial_setup = [1, 2, 3] * 3
 
-        cwd = os.path.dirname(__file__)
-
         self.window = pyglet.window.Window(width=config.VIEWER_WIDTH, height=config.VIEWER_HEIGHT)
-        self.bg = pyglet.image.load(os.path.join(cwd, '../assets/board.png'))  # type: pyglet.image.Texture
-        self.circle_empty = pyglet.image.load(os.path.join(cwd, '../assets/circle_empty.png'))
+        self.bg = pyglet.image.load(BACKGROUND_FILENAME)  # type: pyglet.image.Texture
+        self.circle_empty = pyglet.image.load(EMPTY_CIRCLE_FILENAME)
         self.circle_empty.anchor_x = SELECTION_RADIUS
         self.circle_empty.anchor_y = SELECTION_RADIUS
-        self.circle_filled = pyglet.image.load(os.path.join(cwd, '../assets/circle_filled.png'))
+        self.circle_filled = pyglet.image.load(FILLED_CIRCLE_FILENAME)
         self.circle_filled.anchor_x = SELECTION_RADIUS
         self.circle_filled.anchor_y = SELECTION_RADIUS
 
@@ -121,79 +124,88 @@ class RPS3Game(object):
         self.window.clear()
 
         if not self.game_started:
-            bg = self.bg.get_region(0, 0, width=self.bg.width, height=self.bg.height // 2)
-            bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=300)
-
-            pyglet.text.Label(
-                "Drag and drop to order your pieces.",
-                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
-                x=350, y=550, color=(255, 0, 0, 255)
-            ).draw()
-            pyglet.text.Label(
-                "Press Enter to start match.",
-                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
-                x=350, y=500, color=(255, 0, 0, 255)
-            ).draw()
-
-            for index in range(9):
-                x, y = BOARD_POSITIONS['O'][index]
-                if self.current_selection is not None:
-                    if self.current_selection == index:
-                        continue
-                    else:
-                        if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
-                                         self.current_point[0], self.current_point[1]):
-                            draw_circle(self.circle_filled, x, y)
-                        else:
-                            draw_circle(self.circle_empty, x, y)
-                draw_piece(x, y, self.initial_setup[index], True)
-
-            if self.current_selection is not None:
-                x, y = self.current_point
-                draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.initial_setup[self.current_selection], True)
+            self._draw_board_setup()
         else:
-            self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
-
-            if 'round' in self.info and self.info['round'] > 0:
-                txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
-                if self.info['opponent_move'] is not None:
-                    txt += ", {} > {}".format(*self.info['opponent_move'])
-                else:
-                    txt += ' - Game Over.'
-                pyglet.text.Label(
-                    txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='center',
-                    x=10, y=config.VIEWER_HEIGHT - 30, color=(0, 0, 0, 255)
-                ).draw()
-
-            available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
-                if not self.game_over else []
-            for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:
-                r, i = i2l(index)
-                x, y = BOARD_POSITIONS[r][i]
-                if self.current_selection is not None:
-                    if self.current_selection == index:
-                        continue
-                    elif index in available_spots:
-                        if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
-                                         self.current_point[0], self.current_point[1]):
-                            draw_circle(self.circle_filled, x, y)
-                        else:
-                            draw_circle(self.circle_empty, x, y)
-                if self.obs['occupied'][index]:
-                    draw_piece(x, y, self.obs['piece_type'][index], self.obs['player_owned'][index])
-
-            if self.current_selection is not None:
-                x, y = self.current_point
-                draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.obs['piece_type'][self.current_selection], True)
+            self._draw_match()
 
         if self.game_over:
-            txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
-            pyglet.text.Label(
-                txt, font_name='Arial', font_size=32, anchor_x='center', anchor_y='center',
-                x=350, y=30, color=(0, 0, 0, 255)
-            ).draw()
+            self._draw_game_over()
 
         self.window.flip()
+
+    def _draw_board_setup(self):
+        bg = self.bg.get_region(0, 0, width=self.bg.width, height=self.bg.height // 2)
+        bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=300)
+
+        pyglet.text.Label(
+            "Drag and drop to order your pieces.",
+            font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+            x=350, y=550, color=(255, 0, 0, 255)
+        ).draw()
+        pyglet.text.Label(
+            "Press Enter to start match.",
+            font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+            x=350, y=500, color=(255, 0, 0, 255)
+        ).draw()
+
+        for index in range(9):
+            x, y = BOARD_POSITIONS['O'][index]
+            if self.current_selection is not None:
+                if self.current_selection == index:
+                    continue
+                else:
+                    if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
+                                     self.current_point[0], self.current_point[1]):
+                        draw_circle(self.circle_filled, x, y)
+                    else:
+                        draw_circle(self.circle_empty, x, y)
+            draw_piece(x, y, self.initial_setup[index], True)
+
+        if self.current_selection is not None:
+            x, y = self.current_point
+            draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.initial_setup[self.current_selection], True)
+
+    def _draw_match(self):
+        self.bg.blit(BOARD_OFFSET_X, BOARD_OFFSET_Y, width=600, height=600)
+
+        if 'round' in self.info and self.info['round'] > 0:
+            txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
+            if self.info['opponent_move'] is not None:
+                txt += ", {} > {}".format(*self.info['opponent_move'])
+            else:
+                txt += ' - Game Over.'
+            pyglet.text.Label(
+                txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='center',
+                x=10, y=config.VIEWER_HEIGHT - 30, color=(0, 0, 0, 255)
+            ).draw()
+
+        available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
+            if not self.game_over else []
+        for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:
+            r, i = i2l(index)
+            x, y = BOARD_POSITIONS[r][i]
+            if self.current_selection is not None:
+                if self.current_selection == index:
+                    continue
+                elif index in available_spots:
+                    if within_radius(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y,
+                                     self.current_point[0], self.current_point[1]):
+                        draw_circle(self.circle_filled, x, y)
+                    else:
+                        draw_circle(self.circle_empty, x, y)
+            if self.obs['occupied'][index]:
+                draw_piece(x, y, self.obs['piece_type'][index], self.obs['player_owned'][index])
+
+        if self.current_selection is not None:
+            x, y = self.current_point
+            draw_piece(x - BOARD_OFFSET_X, y - BOARD_OFFSET_Y, self.obs['piece_type'][self.current_selection], True)
+
+    def _draw_game_over(self):
+        txt = "Game Over! {} won.".format('Player' if sum(self.last_reward) > 0 else 'Opponent')
+        pyglet.text.Label(
+            txt, font_name='Arial', font_size=32, anchor_x='center', anchor_y='center',
+            x=350, y=30, color=(0, 0, 0, 255)
+        ).draw()
 
     def _on_mouse_press(self, x, y, button, modifiers):
         if button != mouse.LEFT:
