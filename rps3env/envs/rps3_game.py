@@ -18,11 +18,11 @@ import logging
 import math
 import random
 import sys
+from collections import OrderedDict
 
 import gym
-from gym import spaces
-
 import rps3env.config
+from gym import spaces
 from rps3env import opponents
 from rps3env.classes import PieceType, BoardPiece, BoardLocation
 
@@ -227,13 +227,13 @@ class RPS3GameEnv(gym.Env):
 
     def _get_observation(self):
         board = self._board['O'] + self._board['I'] + self._board['C']
-        obs = {
-            'occupied': [location.piece is not None for location in board],
-            'player_owned': [location.piece is not None and location.piece.player_owned for location in board],
-            'piece_type': [PieceType.N.value] * 28,
-            'player_captures': [0, 0, 0],
-            'opponent_captures': [0, 0, 0],
-        }
+        obs = OrderedDict([
+            ('occupied', [location.piece is not None for location in board]),
+            ('player_owned', [location.piece is not None and location.piece.player_owned for location in board]),
+            ('piece_type', [PieceType.N.value] * 28),
+            ('player_captures', [0, 0, 0]),
+            ('opponent_captures', [0, 0, 0]),
+        ])
         if self._round < 0:
             return obs
         player_counts = [0, 0, 0]
