@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import argparse
+import math
 import os
 
 import gym
@@ -39,6 +40,10 @@ SELECTION_RADIUS = 30
 
 BOARD_OFFSET_X = 50
 BOARD_OFFSET_Y = 50
+
+ARROW_LINE_WIDTH = 4
+ARROW_HEAD_ANGLE = 30
+ARROW_HEAD_LENGTH = 20
 
 
 def draw_circle(img: pyglet.image, x: int, y: int):
@@ -82,6 +87,30 @@ def within_radius(x_1, y_1, x_2, y_2):
     # return (abs(x_1 - x_2) <= SELECTION_RADIUS) and (abs(y_1 - y_2) <= SELECTION_RADIUS)
 
 
+def draw_arrow(point_from, point_to, color):
+    direction = (point_to - point_from) / norm(point_to - point_from)
+    p3 = point_to - direction * ARROW_HEAD_LENGTH
+    head_1 = rotate_around_point(p3, point_to, ARROW_HEAD_ANGLE)
+    head_2 = rotate_around_point(p3, point_to, -ARROW_HEAD_ANGLE)
+    draw_line(point_from, point_to, color)
+    draw_line(point_to, head_1, color)
+    draw_line(point_to, head_2, color)
+
+
+def draw_line(point_from, point_to, color):
+    pyglet.graphics.draw(
+        2, gl.GL_LINES,
+        ("v2f", (point_from[0], point_from[1], point_to[0], point_to[1])),
+        ('c3B', (color * 2))
+    )
+
+
+def rotate_around_point(x, point, degrees):
+    theta = math.radians(degrees)
+    rotation_matrix = np.array([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
+    return np.matmul(rotation_matrix, (x - point)) + point
+
+
 class RPS3Game(object):
     def __init__(self, difficulty=2, random_seed=None) -> None:
         if difficulty <= 0:
@@ -111,7 +140,7 @@ class RPS3Game(object):
 
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-        gl.glLineWidth(5)
+        gl.glLineWidth(ARROW_LINE_WIDTH)
 
         self.window.on_draw = self._on_draw
         self.window.on_mouse_press = self._on_mouse_press
@@ -208,18 +237,14 @@ class RPS3Game(object):
             x=10, y=config.VIEWER_HEIGHT - 10, color=(0, 0, 0, 255)
         ).draw()
 
-    def _draw_move(self, move_from, move_to, color=(0, 0, 255)):
+    def _draw_move(self, move_from, move_to, color):
         offset = np.array((BOARD_OFFSET_X, BOARD_OFFSET_Y))
         p1 = np.array(BOARD_POSITIONS[move_from[0]][int(move_from[1:])]) + offset
         p2 = np.array(BOARD_POSITIONS[move_to[0]][int(move_to[1:])]) + offset
         direction = (p2 - p1) / norm(p2 - p1)
         p1 = p1 + direction * SELECTION_RADIUS
         p2 = p2 - direction * SELECTION_RADIUS
-        pyglet.graphics.draw(
-            2, gl.GL_LINES,
-            ("v2f", (p1[0], p1[1], p2[0], p2[1])),
-            ('c3B', (color * 2))
-        )
+        draw_arrow(p1, p2, color)
 
     def _draw_captures(self):
         pyglet.text.Label(
