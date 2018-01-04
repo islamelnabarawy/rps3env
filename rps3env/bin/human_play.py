@@ -28,12 +28,12 @@ import rps3env
 from rps3env import envs, config
 from rps3env.envs.rps3_game import BOARD_POSITIONS
 
+__author__ = 'Islam Elnabarawy'
+
 FILE_DIR = os.path.dirname(__file__)
 BACKGROUND_FILENAME = os.path.join(FILE_DIR, '../assets/board.png')
 EMPTY_CIRCLE_FILENAME = os.path.join(FILE_DIR, '../assets/circle_empty.png')
 FILLED_CIRCLE_FILENAME = os.path.join(FILE_DIR, '../assets/circle_filled.png')
-
-__author__ = 'Islam Elnabarawy'
 
 SELECTION_RADIUS = 30
 
