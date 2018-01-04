@@ -18,6 +18,11 @@ from enum import Enum
 __author__ = 'Islam Elnabarawy'
 
 
+class PlayerColor(Enum):
+    Blue = 0
+    Red = 1
+
+
 class PieceType(Enum):
     N = -1
     U = 0
@@ -27,14 +32,14 @@ class PieceType(Enum):
 
 
 class BoardPiece(object):
-    def __init__(self, piece_type: PieceType, player_owned: bool, revealed: bool = False) -> None:
+    def __init__(self, piece_type: PieceType, color: PlayerColor, revealed: bool = False) -> None:
         super().__init__()
         self._piece_type = piece_type
-        self._player_owned = player_owned
+        self._color = color
         self._revealed = revealed
 
-    def to_str(self, hidden=True):
-        if self._player_owned:
+    def to_str(self, player_color, hidden=True):
+        if self._color == player_color:
             return 'P' + self._piece_type.name
         return 'O' + (self._piece_type.name if self.revealed or not hidden else 'U')
 
@@ -44,7 +49,11 @@ class BoardPiece(object):
 
     @property
     def player_owned(self) -> bool:
-        return self._player_owned
+        return self._color == PlayerColor.Blue
+
+    @property
+    def color(self) -> PlayerColor:
+        return self._color
 
     @property
     def revealed(self) -> bool:

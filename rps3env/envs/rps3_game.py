@@ -21,10 +21,11 @@ import sys
 from collections import OrderedDict
 
 import gym
-import rps3env.config
 from gym import spaces
+
+import rps3env.config
 from rps3env import opponents
-from rps3env.classes import PieceType, BoardPiece, BoardLocation
+from rps3env.classes import PieceType, BoardPiece, BoardLocation, PlayerColor
 
 __author__ = 'Islam Elnabarawy'
 
@@ -140,10 +141,10 @@ class RPS3GameEnv(gym.Env):
                    action.count(PieceType.P.value) == \
                    action.count(PieceType.S.value) == 3
             for i, v in enumerate(action):
-                self._board['O'][i].piece = BoardPiece(PieceType(v), True)
+                self._board['O'][i].piece = BoardPiece(PieceType(v), PlayerColor.Blue)
             layout = self._get_opponent_layout()
             for i in range(9, 18):
-                self._board['O'][i].piece = BoardPiece(layout[i - 9], False)
+                self._board['O'][i].piece = BoardPiece(layout[i - 9], PlayerColor.Red)
             self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
         else:
             assert isinstance(action, tuple) and len(action) == 2
@@ -220,7 +221,7 @@ class RPS3GameEnv(gym.Env):
                 output = output.replace(
                     "%s%d" % (ring, index),
                     '..' if location.piece is None else ('{}!' if location.piece.revealed else '{}').format(
-                        location.piece.to_str(False))
+                        location.piece.to_str(PlayerColor.Blue, False))
                 )
         output += self._opponent.print_board(output=False)
         return output
@@ -443,9 +444,9 @@ class RPS3GameEnv(gym.Env):
             x, y = BOARD_POSITIONS[location.ring][location.index]
             color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
             pyglet.text.Label(
-                ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(False)), font_name='Arial',
-                font_size=28, anchor_x='center', anchor_y='center', x=x + board_offset_x, y=y + board_offset_y,
-                color=color
+                ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(PlayerColor.Blue, False)),
+                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
+                x=x + board_offset_x, y=y + board_offset_y, color=color
             ).draw()
 
         self._bg.blit(board_offset_x, board_offset_y, width=600, height=600)
