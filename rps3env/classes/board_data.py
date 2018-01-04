@@ -48,10 +48,6 @@ class BoardPiece(object):
         return self._piece_type
 
     @property
-    def player_owned(self) -> bool:
-        return self._color == PlayerColor.Blue
-
-    @property
     def color(self) -> PlayerColor:
         return self._color
 

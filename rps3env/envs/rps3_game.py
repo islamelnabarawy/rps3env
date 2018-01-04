@@ -230,7 +230,9 @@ class RPS3GameEnv(gym.Env):
         board = self._board['O'] + self._board['I'] + self._board['C']
         obs = OrderedDict([
             ('occupied', [location.piece is not None for location in board]),
-            ('player_owned', [location.piece is not None and location.piece.player_owned for location in board]),
+            ('player_owned', [
+                location.piece is not None and location.piece.color == PlayerColor.Blue for location in board
+            ]),
             ('piece_type', [PieceType.N.value] * 28),
             ('player_captures', [0, 0, 0]),
             ('opponent_captures', [0, 0, 0]),
@@ -242,13 +244,13 @@ class RPS3GameEnv(gym.Env):
         for i, l in enumerate(board):
             if l.piece is None:
                 p = PieceType.N.value
-            elif not l.piece.player_owned and not l.piece.revealed:
+            elif l.piece.color != PlayerColor.Blue and not l.piece.revealed:
                 p = PieceType.U.value
             else:
                 p = l.piece.piece_type.value
             obs['piece_type'][i] = p
             if l.piece is not None:
-                if l.piece.player_owned:
+                if l.piece.color == PlayerColor.Blue:
                     player_counts[l.piece.piece_type.value - 1] += 1
                 else:
                     opponent_counts[l.piece.piece_type.value - 1] += 1
@@ -293,12 +295,12 @@ class RPS3GameEnv(gym.Env):
 
         self._opponent.apply_move(move_data)
 
-    def _get_player_moves(self, player=True):
+    def _get_player_moves(self):
         moves = []
         for ring in 'OIC':
             squares = self._board[ring]
             for (index, location) in enumerate(squares):
-                if location.piece is not None and location.piece.player_owned == player:
+                if location.piece is not None and location.piece.color == PlayerColor.Blue:
                     moves.extend([
                         ('{}{}'.format(ring, index), '{}{}'.format(r, i))
                         for (r, i) in self._get_piece_moves(ring, index)
@@ -311,7 +313,7 @@ class RPS3GameEnv(gym.Env):
         assert piece is not None
 
         def empty_or_opponent(location):
-            return location.piece is None or location.piece.player_owned != piece.player_owned
+            return location.piece is None or location.piece.color != piece.color
 
         if ring == 'O':
             left = (index + 1) % 18
@@ -390,7 +392,7 @@ class RPS3GameEnv(gym.Env):
         opponent_counts = {PieceType.R: 0, PieceType.P: 0, PieceType.S: 0}
         for ring in 'OIC':
             for piece in [location.piece for location in self._board[ring] if location.piece is not None]:
-                if piece.player_owned:
+                if piece.color == PlayerColor.Blue:
                     player_counts[piece.piece_type] += 1
                 else:
                     opponent_counts[piece.piece_type] += 1
@@ -401,9 +403,9 @@ class RPS3GameEnv(gym.Env):
         center_piece = self._board['C'][0].piece
         if center_piece is not None:
             center_counter = piece_counters[center_piece.piece_type]
-            if center_piece.player_owned and opponent_counts[center_counter] == 0:
+            if center_piece.color == PlayerColor.Blue and opponent_counts[center_counter] == 0:
                 return True, True
-            if not center_piece.player_owned and player_counts[center_counter] == 0:
+            if center_piece.color != PlayerColor.Blue and player_counts[center_counter] == 0:
                 return True, False
 
         return False, False
@@ -442,7 +444,7 @@ class RPS3GameEnv(gym.Env):
         def draw_location(location: BoardLocation):
             assert location.piece is not None
             x, y = BOARD_POSITIONS[location.ring][location.index]
-            color = (0, 0, 255, 255) if location.piece.player_owned else (255, 0, 0, 255)
+            color = (0, 0, 255, 255) if location.piece.color == PlayerColor.Blue else (255, 0, 0, 255)
             pyglet.text.Label(
                 ('{}!' if location.piece.revealed else '{}').format(location.piece.to_str(PlayerColor.Blue, False)),
                 font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
