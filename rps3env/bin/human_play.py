@@ -111,6 +111,7 @@ class RPS3Game(object):
 
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        gl.glLineWidth(5)
 
         self.window.on_draw = self._on_draw
         self.window.on_mouse_press = self._on_mouse_press
@@ -196,14 +197,29 @@ class RPS3Game(object):
 
     def _draw_round_info(self):
         txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
+        self._draw_move(*self.info['player_move'], (0, 0, 255))
         if self.info['opponent_move'] is not None:
             txt += ", {} > {}".format(*self.info['opponent_move'])
+            self._draw_move(*self.info['opponent_move'], (255, 0, 0))
         else:
             txt += ' - Game Over.'
         pyglet.text.Label(
             txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='top',
             x=10, y=config.VIEWER_HEIGHT - 10, color=(0, 0, 0, 255)
         ).draw()
+
+    def _draw_move(self, move_from, move_to, color=(0, 0, 255)):
+        offset = np.array((BOARD_OFFSET_X, BOARD_OFFSET_Y))
+        p1 = np.array(BOARD_POSITIONS[move_from[0]][int(move_from[1:])]) + offset
+        p2 = np.array(BOARD_POSITIONS[move_to[0]][int(move_to[1:])]) + offset
+        direction = (p2 - p1) / norm(p2 - p1)
+        p1 = p1 + direction * SELECTION_RADIUS
+        p2 = p2 - direction * SELECTION_RADIUS
+        pyglet.graphics.draw(
+            2, gl.GL_LINES,
+            ("v2f", (p1[0], p1[1], p2[0], p2[1])),
+            ('c3B', (color * 2))
+        )
 
     def _draw_captures(self):
         pyglet.text.Label(
