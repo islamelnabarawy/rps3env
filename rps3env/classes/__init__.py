@@ -17,5 +17,6 @@ from rps3env.classes.board_data import BoardLocation
 from rps3env.classes.board_data import BoardPiece
 from rps3env.classes.board_data import PieceType
 from rps3env.classes.board_data import PlayerColor
+from rps3env.classes.match import Match
 
 __author__ = 'Islam Elnabarawy'
