@@ -69,6 +69,10 @@ def l2i(l):
     return 27
 
 
+def action_to_move(action):
+    return tuple(i2l(i) for i in action)
+
+
 def move_to_action(move):
     return tuple(l2i(l) for l in move)
 
@@ -152,6 +156,7 @@ class RPS3GameEnv(gym.Env):
             self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
         else:
             assert isinstance(action, tuple) and len(action) == 2
+            player_move = action_to_move(action)
             move_reward, other_piece = self._match.make_move(action[0], action[1], PlayerColor.Blue)
             reward[0] = move_reward
 

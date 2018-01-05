@@ -27,7 +27,7 @@ from pyglet.window import mouse, key
 # noinspection PyUnresolvedReferences
 import rps3env
 from rps3env import envs, config
-from rps3env.envs.rps3_game import BOARD_POSITIONS
+from rps3env.envs.rps3_game import BOARD_POSITIONS, l2i
 
 __author__ = 'Islam Elnabarawy'
 
@@ -50,12 +50,6 @@ def draw_circle(img: pyglet.image, x: int, y: int):
     img.blit(x + BOARD_OFFSET_X, y + BOARD_OFFSET_Y, width=SELECTION_RADIUS * 2, height=SELECTION_RADIUS * 2)
 
 
-def i2l(i):
-    if i < 18: return 'O', i
-    if i < 27: return 'I', i - 18
-    return 'C', 0
-
-
 def draw_piece(x, y, piece_type, player_owned):
     color = (0, 0, 255, 255) if player_owned else (255, 0, 0, 255)
     text = '?RPS'[piece_type]
@@ -72,9 +66,8 @@ def find_cell(x, y, start=0, stop=9, skip=None):
     for i in range(start, stop):
         if skip is not None and i in skip:
             continue
-        ring, index = i2l(i)
-        x_cell = BOARD_POSITIONS[ring][index][0] + BOARD_OFFSET_X
-        y_cell = BOARD_POSITIONS[ring][index][1] + BOARD_OFFSET_Y
+        x_cell = BOARD_POSITIONS[i][0] + BOARD_OFFSET_X
+        y_cell = BOARD_POSITIONS[i][1] + BOARD_OFFSET_Y
         if within_radius(x, y, x_cell, y_cell):
             found_index = i
             found_point = (x, y)
@@ -85,6 +78,16 @@ def find_cell(x, y, start=0, stop=9, skip=None):
 def within_radius(x_1, y_1, x_2, y_2):
     return abs(norm(np.array((x_1, y_1)) - np.array((x_2, y_2)))) <= SELECTION_RADIUS
     # return (abs(x_1 - x_2) <= SELECTION_RADIUS) and (abs(y_1 - y_2) <= SELECTION_RADIUS)
+
+
+def draw_move(move_from, move_to, color):
+    offset = np.array((BOARD_OFFSET_X, BOARD_OFFSET_Y))
+    p1 = np.array(BOARD_POSITIONS[l2i(move_from)]) + offset
+    p2 = np.array(BOARD_POSITIONS[l2i(move_to)]) + offset
+    direction = (p2 - p1) / norm(p2 - p1)
+    p1 = p1 + direction * SELECTION_RADIUS
+    p2 = p2 - direction * SELECTION_RADIUS
+    draw_arrow(p1, p2, color)
 
 
 def draw_arrow(point_from, point_to, color):
@@ -179,7 +182,7 @@ class RPS3Game(object):
         ).draw()
 
         for index in range(9):
-            x, y = BOARD_POSITIONS['O'][index]
+            x, y = BOARD_POSITIONS[index]
             if self.current_selection is not None:
                 if self.current_selection == index:
                     continue
@@ -206,8 +209,7 @@ class RPS3Game(object):
         available_spots = [x2 for x1, x2 in self.env.available_actions if x1 == self.current_selection] \
             if not self.game_over else []
         for index in [i for i in range(28) if self.obs['occupied'][i] or (i in available_spots)]:
-            r, i = i2l(index)
-            x, y = BOARD_POSITIONS[r][i]
+            x, y = BOARD_POSITIONS[index]
             if self.current_selection is not None:
                 if self.current_selection == index:
                     continue
@@ -226,25 +228,16 @@ class RPS3Game(object):
 
     def _draw_round_info(self):
         txt = "Round {}: {} > {}".format(self.info['round'], *self.info['player_move'])
-        self._draw_move(*self.info['player_move'], (0, 0, 255))
+        draw_move(*self.info['player_move'], (0, 0, 255))
         if self.info['opponent_move'] is not None:
             txt += ", {} > {}".format(*self.info['opponent_move'])
-            self._draw_move(*self.info['opponent_move'], (255, 0, 0))
+            draw_move(*self.info['opponent_move'], (255, 0, 0))
         else:
             txt += ' - Game Over.'
         pyglet.text.Label(
             txt, font_name='Arial', font_size=16, anchor_x='left', anchor_y='top',
             x=10, y=config.VIEWER_HEIGHT - 10, color=(0, 0, 0, 255)
         ).draw()
-
-    def _draw_move(self, move_from, move_to, color):
-        offset = np.array((BOARD_OFFSET_X, BOARD_OFFSET_Y))
-        p1 = np.array(BOARD_POSITIONS[move_from[0]][int(move_from[1:])]) + offset
-        p2 = np.array(BOARD_POSITIONS[move_to[0]][int(move_to[1:])]) + offset
-        direction = (p2 - p1) / norm(p2 - p1)
-        p1 = p1 + direction * SELECTION_RADIUS
-        p2 = p2 - direction * SELECTION_RADIUS
-        draw_arrow(p1, p2, color)
 
     def _draw_captures(self):
         pyglet.text.Label(
