@@ -44,7 +44,7 @@ class Match(object):
         self._moves.append((color, pieces))
 
     def make_move(self, move_from: int, move_to: int, color: PlayerColor):
-        assert self._round[color.value] >= 0
+        assert self._round[color.value] >= 0 and self._round[1 - color.value] >= 0
         assert self._round[color.value] < self._round[1 - color.value] or \
                (color == PlayerColor.Blue and self._round[color.value] == self._round[1 - color.value])
         assert move_to in valid_locations(move_from)
@@ -58,7 +58,7 @@ class Match(object):
         if to_piece is None:
             # this is a move action, just swap the piece across
             self._board[move_from], self._board[move_to] = None, from_piece
-            result = 0
+            result = (0, None)
 
         self._round[color.value] += 1
         self._moves.append((color, move_from, move_to))

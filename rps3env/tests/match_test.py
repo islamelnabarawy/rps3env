@@ -19,8 +19,9 @@ from rps3env.classes import Match, PlayerColor
 
 __author__ = 'Islam Elnabarawy'
 
-BLUE_SETUP = [1, 2, 3] * 3
-RED_SETUP = [3, 1, 2] * 3
+BLUE_SETUP = [1, 2, 3, 1, 2, 3, 1, 2, 3]
+RED_SETUP = [3, 1, 2, 3, 1, 2, 3, 1, 2]
+BAD_SETUP = [1, 2, 3, 3, 3, 3, 2, 2, 1]
 
 
 class MatchTest(unittest.TestCase):
@@ -37,38 +38,42 @@ class MatchTest(unittest.TestCase):
     def test_empty_board(self):
         self.assertListEqual(self.match.board, [None for _ in range(28)])
 
-    def test_blue_valid_setup(self):
-        setup = [1, 2, 3] * 3
-        self.match.set_board(setup, PlayerColor.Blue)
-        for i in range(9):
-            self.assertEqual(PlayerColor.Blue, self.match.board[i].color)
-            self.assertEqual(setup[i], self.match.board[i].piece_type.value)
-        for i in range(9, 28):
-            self.assertIsNone(self.match.board[i])
-
-    def test_blue_invalid_setup(self):
-        self.assertRaises(AssertionError,
-                          lambda: self.match.set_board([1, 2, 3, 3, 3, 3, 3, 2, 2, 1], PlayerColor.Blue))
-
-    def test_blue_double_setup(self):
-        self.match.set_board([1, 2, 3] * 3, PlayerColor.Blue)
-        self.assertRaises(AssertionError, lambda: self.match.set_board([1, 2, 3] * 3, PlayerColor.Blue))
-
-    def test_full_setup(self):
-        self.setup_board()
+    def test_valid_setup(self):
+        self.match.set_board(BLUE_SETUP, PlayerColor.Blue)
         for i in range(9):
             self.assertEqual(PlayerColor.Blue, self.match.board[i].color)
             self.assertEqual(BLUE_SETUP[i], self.match.board[i].piece_type.value)
+        for i in range(9, 28):
+            self.assertIsNone(self.match.board[i])
+        self.match.set_board(RED_SETUP, PlayerColor.Red)
         for i in range(9, 18):
             self.assertEqual(PlayerColor.Red, self.match.board[i].color)
             self.assertEqual(RED_SETUP[i - 9], self.match.board[i].piece_type.value)
         for i in range(18, 28):
             self.assertIsNone(self.match.board[i])
 
+    def test_invalid_setup(self):
+        self.assertRaises(AssertionError, lambda: self.match.set_board(BAD_SETUP, PlayerColor.Blue))
+        self.assertRaises(AssertionError, lambda: self.match.set_board(BAD_SETUP, PlayerColor.Red))
+
+    def test_double_setup(self):
+        self.match.set_board(BLUE_SETUP, PlayerColor.Blue)
+        self.assertRaises(AssertionError, lambda: self.match.set_board(BLUE_SETUP, PlayerColor.Blue))
+        self.match.set_board(RED_SETUP, PlayerColor.Red)
+        self.assertRaises(AssertionError, lambda: self.match.set_board(RED_SETUP, PlayerColor.Red))
+
+    def test_make_move_too_soon_blue(self):
+        self.match.set_board(BLUE_SETUP, PlayerColor.Blue)
+        self.assertRaises(AssertionError, lambda: self.match.make_move(0, 18, PlayerColor.Blue))
+
+    def test_make_move_too_soon_red(self):
+        self.match.set_board(RED_SETUP, PlayerColor.Red)
+        self.assertRaises(AssertionError, lambda: self.match.make_move(9, 22, PlayerColor.Red))
+
     def test_make_move_legal_movement(self):
         self.setup_board()
         piece_to_move = self.match.board[0]
-        self.assertEqual(0, self.match.make_move(0, 18, PlayerColor.Blue))
+        self.assertEqual((0, None), self.match.make_move(0, 18, PlayerColor.Blue))
         self.assertIsNone(self.match.board[0])
         self.assertEqual(piece_to_move, self.match.board[18])
 
@@ -79,9 +84,9 @@ class MatchTest(unittest.TestCase):
 
     def test_make_move_twice(self):
         self.setup_board()
-        self.assertEqual(0, self.match.make_move(0, 18, PlayerColor.Blue))
+        self.assertEqual((0, None), self.match.make_move(0, 18, PlayerColor.Blue))
         self.assertRaises(AssertionError, lambda: self.match.make_move(18, 0, PlayerColor.Blue))
-        self.assertEqual(0, self.match.make_move(9, 22, PlayerColor.Red))
+        self.assertEqual((0, None), self.match.make_move(9, 22, PlayerColor.Red))
         self.assertRaises(AssertionError, lambda: self.match.make_move(22, 9, PlayerColor.Red))
 
     def test_make_move_wrong_turn(self):
