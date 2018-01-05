@@ -88,6 +88,17 @@ class Match(object):
         other._moves = self._moves[:]
         return other
 
+    def get_possible_moves(self):
+        assert self._round[0] >= 0 and self._round[1] >= 0
+        color = PlayerColor.Blue if self._round[0] <= self._round[1] else PlayerColor.Red
+        moves = []
+        for i, p in enumerate(self._board):
+            if p is not None and p.color == color:
+                moves.extend(
+                    (i, x) for x in valid_locations(i) if self._board[x] is None or self._board[x].color != color
+                )
+        return color, moves
+
 
 def valid_locations(index):
     if index < 18:

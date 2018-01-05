@@ -171,3 +171,24 @@ class MatchTest(unittest.TestCase):
         self.assertNotEqual(match_clone._moves, self.match._moves)
         self.assertIsNotNone(match_clone.board[0])
         self.assertIsNone(match_clone.board[18])
+
+    def test_possible_moves(self):
+        self.setup_board()
+
+        possible_moves = [
+            (0, 17), (0, 18), (1, 18), (2, 19), (3, 19), (4, 20), (5, 20), (6, 21), (7, 21), (8, 9), (8, 22)
+        ]
+
+        color, moves = self.match.get_possible_moves()
+        self.assertEqual(classes.PlayerColor.Blue, color)
+        self.assertEqual(possible_moves, moves)
+
+        self.match.make_move(0, 18, classes.PlayerColor.Blue)
+
+        possible_moves = [
+            (9, 8), (9, 22), (10, 23), (11, 23), (12, 24), (13, 24), (14, 25), (15, 25), (16, 26), (17, 0), (17, 26)
+        ]
+
+        color, moves = self.match.get_possible_moves()
+        self.assertEqual(classes.PlayerColor.Red, color)
+        self.assertEqual(possible_moves, moves)
