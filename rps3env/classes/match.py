@@ -25,10 +25,19 @@ class Match(object):
         self._board = [None] * 28
         self._round = [-1, -1]
         self._moves = []
+        self._game_over = False
 
     @property
     def board(self):
         return self._board
+
+    @property
+    def moves(self):
+        return self._moves
+
+    @property
+    def game_over(self):
+        return self._game_over
 
     def set_board(self, pieces: list, color: PlayerColor):
         assert self._round[color.value] < 0
@@ -41,9 +50,10 @@ class Match(object):
             self._board[i + (9 * color.value)] = BoardPiece(PieceType(v), color)
 
         self._round[color.value] += 1
-        self._moves.append((color, pieces))
+        self._moves.append((pieces, color))
 
     def make_move(self, move_from: int, move_to: int, color: PlayerColor):
+        assert not self._game_over
         assert self._round[color.value] >= 0 and self._round[1 - color.value] >= 0
         assert self._round[color.value] < self._round[1 - color.value] or \
                (color == PlayerColor.Blue and self._round[color.value] == self._round[1 - color.value])
@@ -76,8 +86,24 @@ class Match(object):
                 self._board[move_from] = None
                 result = -1
 
+        # check game-over conditions
+        center_piece = self._board[27]
+        if center_piece is not None:
+            other_pieces = [p.piece_type for p in self._board if p is not None and p.color != center_piece.color]
+            if other_pieces.count([PieceType.P, PieceType.S, PieceType.R][center_piece.piece_type.value - 1]) == 0:
+                result += 100 if center_piece.color == color else -100
+                self._game_over = True
+
+        if not self._game_over and len([p for p in self._board if p is not None and p.color == color]) == 0:
+            result -= 100
+            self._game_over = True
+
+        if not self._game_over and len([p for p in self._board if p is not None and p.color != color]) == 0:
+            result += 100
+            self._game_over = True
+
         self._round[color.value] += 1
-        self._moves.append((color, move_from, move_to))
+        self._moves.append((move_from, move_to, color))
 
         return result, (to_piece.piece_type if to_piece is not None else None)
 

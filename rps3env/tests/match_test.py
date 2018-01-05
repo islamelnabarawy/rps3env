@@ -14,6 +14,7 @@
    limitations under the License.
 """
 import unittest
+from itertools import starmap
 
 from rps3env import classes
 
@@ -192,3 +193,66 @@ class MatchTest(unittest.TestCase):
         color, moves = self.match.get_possible_moves()
         self.assertEqual(classes.PlayerColor.Red, color)
         self.assertEqual(possible_moves, moves)
+
+    def check_full_game(self, move_sequence, result_sequence):
+        self.assertListEqual(result_sequence, list(starmap(self.match.make_move, move_sequence)))
+        self.assertTrue(self.match.game_over)
+        self.assertListEqual(move_sequence, self.match.moves[2:])
+
+    def test_game_over_capture_3(self):
+        self.setup_board()
+
+        move_sequence = [
+            (8, 22, classes.PlayerColor.Blue), (11, 23, classes.PlayerColor.Red),
+            (22, 23, classes.PlayerColor.Blue), (14, 25, classes.PlayerColor.Red),
+            (23, 24, classes.PlayerColor.Blue), (25, 24, classes.PlayerColor.Red),
+            (24, 25, classes.PlayerColor.Blue), (17, 26, classes.PlayerColor.Red),
+            (0, 18, classes.PlayerColor.Blue), (26, 25, classes.PlayerColor.Red),
+            (18, 27, classes.PlayerColor.Blue),
+        ]
+        result_sequence = [
+            (0, None), (0, None), (1, classes.PieceType.P), (0, None), (0, None), (-1, classes.PieceType.S),
+            (0, None), (0, None), (0, None), (-1, classes.PieceType.S), (100, None),
+        ]
+        self.check_full_game(move_sequence, result_sequence)
+
+    def test_game_over_capture_all_1(self):
+        from rps3env.classes import PlayerColor, PieceType
+
+        self.match.set_board(BLUE_SETUP, classes.PlayerColor.Blue)
+        self.match.set_board([2, 2, 2, 1, 1, 1, 3, 3, 3], classes.PlayerColor.Red)
+
+        move_sequence = [
+            (0, 17, PlayerColor.Blue), (14, 25, PlayerColor.Red), (17, 16, PlayerColor.Blue), (13, 24, PlayerColor.Red),
+            (16, 15, PlayerColor.Blue), (24, 23, PlayerColor.Red), (8, 9, PlayerColor.Blue), (12, 24, PlayerColor.Red),
+            (9, 10, PlayerColor.Blue), (23, 22, PlayerColor.Red), (10, 11, PlayerColor.Blue), (25, 27, PlayerColor.Red),
+            (7, 21, PlayerColor.Blue), (22, 21, PlayerColor.Red), (21, 22, PlayerColor.Blue), (27, 22, PlayerColor.Red),
+            (22, 23, PlayerColor.Blue), (24, 23, PlayerColor.Red)
+        ]
+        result_sequence = [
+            (1, PieceType.S), (0, None), (1, PieceType.S), (0, None), (1, PieceType.S), (0, None), (1, PieceType.P),
+            (0, None), (1, PieceType.P), (0, None), (1, PieceType.P), (0, None), (0, None), (-1, PieceType.P),
+            (0, None), (-1, PieceType.P), (0, None), (-101, PieceType.P)
+        ]
+        self.check_full_game(move_sequence, result_sequence)
+
+    def test_game_over_capture_all_2(self):
+        from rps3env.classes import PlayerColor, PieceType
+
+        self.match.set_board(BLUE_SETUP, classes.PlayerColor.Blue)
+        self.match.set_board([2, 2, 2, 1, 1, 1, 3, 3, 3], classes.PlayerColor.Red)
+
+        move_sequence = [
+            (0, 17, PlayerColor.Blue), (14, 25, PlayerColor.Red), (17, 16, PlayerColor.Blue), (13, 24, PlayerColor.Red),
+            (16, 15, PlayerColor.Blue), (24, 23, PlayerColor.Red), (8, 9, PlayerColor.Blue), (12, 24, PlayerColor.Red),
+            (9, 10, PlayerColor.Blue), (23, 22, PlayerColor.Red), (10, 11, PlayerColor.Blue), (25, 27, PlayerColor.Red),
+            (7, 21, PlayerColor.Blue), (22, 21, PlayerColor.Red), (21, 22, PlayerColor.Blue), (27, 22, PlayerColor.Red),
+            (22, 23, PlayerColor.Blue), (24, 12, PlayerColor.Red), (23, 24, PlayerColor.Blue),
+            (12, 13, PlayerColor.Red), (24, 13, PlayerColor.Blue)
+        ]
+        result_sequence = [
+            (1, PieceType.S), (0, None), (1, PieceType.S), (0, None), (1, PieceType.S), (0, None), (1, PieceType.P),
+            (0, None), (1, PieceType.P), (0, None), (1, PieceType.P), (0, None), (0, None), (-1, PieceType.P),
+            (0, None), (-1, PieceType.P), (0, None), (0, None), (0, None), (0, None), (101, PieceType.R)
+        ]
+        self.check_full_game(move_sequence, result_sequence)
