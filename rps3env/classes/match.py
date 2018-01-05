@@ -49,21 +49,37 @@ class Match(object):
                (color == PlayerColor.Blue and self._round[color.value] == self._round[1 - color.value])
         assert move_to in valid_locations(move_from)
 
-        from_piece = self._board[move_from]
-        to_piece = self._board[move_to]
-        result = None
+        from_piece = self._board[move_from]  # type: BoardPiece
+        to_piece = self._board[move_to]  # type: BoardPiece
 
         assert from_piece is not None and from_piece.color == color
 
         if to_piece is None:
             # this is a move action, just swap the piece across
             self._board[move_from], self._board[move_to] = None, from_piece
-            result = (0, None)
+            result = 0
+        else:
+            assert to_piece.color != color
+
+            # both pieces get revealed regardless of the outcome
+            from_piece.revealed = True
+            to_piece.revealed = True
+
+            if to_piece.piece_type == from_piece.piece_type:
+                result = 0
+            elif to_piece.piece_type == [PieceType.S, PieceType.R, PieceType.P][from_piece.piece_type.value - 1]:
+                # challenge won, move the piece across
+                self._board[move_from], self._board[move_to] = None, from_piece
+                result = 1
+            else:
+                # challenge lost, challenger gets destroyed
+                self._board[move_from] = None
+                result = -1
 
         self._round[color.value] += 1
         self._moves.append((color, move_from, move_to))
 
-        return result
+        return result, (to_piece.piece_type if to_piece is not None else None)
 
 
 def valid_locations(index):

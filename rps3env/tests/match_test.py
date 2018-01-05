@@ -15,7 +15,7 @@
 """
 import unittest
 
-from rps3env.classes import Match, PlayerColor
+from rps3env.classes import Match, PlayerColor, PieceType
 
 __author__ = 'Islam Elnabarawy'
 
@@ -101,3 +101,54 @@ class MatchTest(unittest.TestCase):
         self.setup_board()
         self.assertRaises(AssertionError, lambda: self.match.make_move(18, 19, PlayerColor.Blue))
         self.assertRaises(AssertionError, lambda: self.match.make_move(27, 18, PlayerColor.Blue))
+
+    def test_make_move_challenge_tie(self):
+        self.setup_board()
+        self.assertEqual((0, PieceType.S), self.match.make_move(8, 9, PlayerColor.Blue))
+        self.assertTrue(self.match.board[8].revealed)
+        self.assertTrue(self.match.board[9].revealed)
+
+    def test_make_move_challenge_win(self):
+        self.setup_board()
+        self.match.make_move(8, 9, PlayerColor.Blue)
+        self.assertEqual((1, PieceType.R), self.match.make_move(17, 0, PlayerColor.Red))
+        self.assertIsNone(self.match.board[17])
+        self.assertTrue(self.match.board[0].revealed)
+
+    def test_make_move_challenge_loss(self):
+        self.setup_board()
+        self.assertEqual((-1, PieceType.P), self.match.make_move(0, 17, PlayerColor.Blue))
+        self.assertIsNone(self.match.board[0])
+        self.assertTrue(self.match.board[17].revealed)
+
+    def test_make_move_challenge_win_sequence(self):
+        self.setup_board()
+        move_sequence = [
+            (8, 22, PlayerColor.Blue), (11, 23, PlayerColor.Red), (22, 23, PlayerColor.Blue)
+        ]
+        result_sequence = [
+            (0, None), (0, None), (1, PieceType.P)
+        ]
+        while len(move_sequence) > 0:
+            self.assertEqual(result_sequence.pop(0), self.match.make_move(*move_sequence.pop(0)))
+        self.assertIsNone(self.match.board[8])
+        self.assertIsNone(self.match.board[11])
+        self.assertIsNone(self.match.board[22])
+        self.assertTrue(self.match.board[23].revealed)
+        self.assertEqual(PieceType.S, self.match.board[23].piece_type)
+
+    def test_make_move_challenge_loss_sequence(self):
+        self.setup_board()
+        move_sequence = [
+            (2, 19, PlayerColor.Blue), (17, 26, PlayerColor.Red),
+            (19, 18, PlayerColor.Blue), (26, 18, PlayerColor.Red)
+        ]
+        result_sequence = [
+            (0, None), (0, None), (0, None), (-1, PieceType.S)
+        ]
+        while len(move_sequence) > 0:
+            self.assertEqual(result_sequence.pop(0), self.match.make_move(*move_sequence.pop(0)))
+        self.assertIsNone(self.match.board[2])
+        self.assertIsNone(self.match.board[17])
+        self.assertTrue(self.match.board[18].revealed)
+        self.assertEqual(PieceType.S, self.match.board[18].piece_type)
