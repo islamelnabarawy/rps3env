@@ -406,7 +406,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         obs, reward, done, info = self.env.step((25, 24))
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_TAKE_ALL_PIECES,
-                         reward_expected=[100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
+                         reward_expected=[101, 0], done_expected=True, info_expected={'round': len(moves) + 1})
 
     def test_full_game_lose_all_pieces(self):
         self.env.seed(0)
@@ -420,7 +420,7 @@ class RPS3GameEnvTest(unittest.TestCase):
         obs, reward, done, info = self.env.step((26, 17))
 
         self.step_assert(obs, reward, done, info, OBS_AFTER_LOSE_ALL_PIECES,
-                         reward_expected=[-100, 0], done_expected=True, info_expected={'round': len(moves) + 1})
+                         reward_expected=[-101, 0], done_expected=True, info_expected={'round': len(moves) + 1})
 
 
 class RPS3GameMinMaxEnvTest(unittest.TestCase):
