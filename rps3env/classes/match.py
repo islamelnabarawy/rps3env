@@ -81,6 +81,13 @@ class Match(object):
 
         return result, (to_piece.piece_type if to_piece is not None else None)
 
+    def clone(self):
+        other = Match()
+        other._board = [BoardPiece(x.piece_type, x.color, x.revealed) if x is not None else None for x in self._board]
+        other._round = self._round[:]
+        other._moves = self._moves[:]
+        return other
+
 
 def valid_locations(index):
     if index < 18:
