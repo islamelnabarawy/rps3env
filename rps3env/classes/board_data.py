@@ -58,27 +58,3 @@ class BoardPiece(object):
     @revealed.setter
     def revealed(self, value):
         self._revealed = value
-
-
-class BoardLocation(object):
-    def __init__(self, ring: str, index: int, piece: BoardPiece = None) -> None:
-        super().__init__()
-        self._ring = ring
-        self._index = index
-        self._piece = piece
-
-    @property
-    def ring(self) -> str:
-        return self._ring
-
-    @property
-    def index(self) -> int:
-        return self._index
-
-    @property
-    def piece(self) -> BoardPiece:
-        return self._piece
-
-    @piece.setter
-    def piece(self, value: BoardPiece) -> None:
-        self._piece = value

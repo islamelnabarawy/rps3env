@@ -13,7 +13,6 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 """
-from rps3env.classes.board_data import BoardLocation
 from rps3env.classes.board_data import BoardPiece
 from rps3env.classes.board_data import PieceType
 from rps3env.classes.board_data import PlayerColor
