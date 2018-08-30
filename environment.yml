@@ -2,6 +2,6 @@ name: rps3
 dependencies:
 - python=3.6.*
 - pip:
-  - gym
+  - gym==0.9.5
   - pyglet
   - numpy
