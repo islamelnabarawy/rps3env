@@ -1,5 +1,5 @@
 numpy
 pyglet
-gym==0.9.5
+gym>0.9.5
 coveralls
 

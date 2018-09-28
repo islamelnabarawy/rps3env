@@ -103,9 +103,9 @@ class RPS3GameEnv(gym.Env):
             self._observation_space = spaces.Dict([
                 ('occupied', spaces.MultiBinary(28)),
                 ('player_owned', spaces.MultiBinary(28)),
-                ('piece_type', spaces.MultiDiscrete([[-1, 3] for _ in range(28)])),
-                ('player_captures', spaces.MultiDiscrete([[0, 3] for _ in range(3)])),
-                ('opponent_captures', spaces.MultiDiscrete([[0, 3] for _ in range(3)])),
+                ('piece_type', spaces.MultiDiscrete([3] * 28)),
+                ('player_captures', spaces.MultiDiscrete([3, 3, 3])),
+                ('opponent_captures', spaces.MultiDiscrete([3, 3, 3])),
             ])
         return self._observation_space
 
@@ -122,7 +122,7 @@ class RPS3GameEnv(gym.Env):
         if self._match.game_over:
             raise ValueError("The current episode is over. Please call reset() to start a new episode.")
         actions = []
-        if self._action_space.shape == 9:
+        if self._action_space.shape[0] == 9:
             # board setup phase
             actions.extend(list(x) for x in itertools.permutations([1, 2, 3] * 3))
         else:
@@ -130,7 +130,7 @@ class RPS3GameEnv(gym.Env):
             color, actions = self._match.get_possible_moves()
         return actions
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         if seed is None:
             # generate the seed the same way random.seed() does internally
             try:
@@ -142,7 +142,7 @@ class RPS3GameEnv(gym.Env):
         random.seed(seed)
         return seed
 
-    def _step(self, action):
+    def step(self, action):
         if self._match is None:
             raise ValueError("The environment has not been initialized. Please call reset() first.")
         reward = [0, 0]
@@ -153,7 +153,7 @@ class RPS3GameEnv(gym.Env):
             self._match.set_board(action, PlayerColor.Blue)
             layout = self._get_opponent_layout()
             self._match.set_board(list(map(lambda v: v.value, layout)), PlayerColor.Red)
-            self._action_space = spaces.MultiDiscrete([[0, 27] for _ in range(2)])
+            self._action_space = spaces.MultiDiscrete([27, 27])
         else:
             assert isinstance(action, tuple) and len(action) == 2
             player_move = action_to_move(action)
@@ -185,18 +185,24 @@ class RPS3GameEnv(gym.Env):
         info = {'round': self._round, 'player_move': player_move, 'opponent_move': opponent_move}
         return self._get_observation(), reward, self._match.game_over, info
 
-    def _reset(self):
+    def reset(self):
         self._match = Match()
         self._init_opponent()
         self._round = -1
         self._player_won = False
-        self._action_space = spaces.MultiDiscrete([[1, 3] for _ in range(9)])
+        self._action_space = spaces.MultiDiscrete([3] * 9)
         return self._get_observation()
+
+    def close(self):
+        self.render(close=True)
+        super().close()
 
     def _init_opponent(self):
         self._opponent = opponents.RandomOpponent()
 
-    def _render(self, mode='human', close=False):
+    def render(self, mode='human', close=False):
+        if mode not in self.metadata['render.modes']:
+            raise gym.error.UnsupportedMode
         if close:
             if self._window is not None:
                 self._window.close()

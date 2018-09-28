@@ -216,20 +216,16 @@ class RPS3GameEnvTest(unittest.TestCase):
     def test_action_space_pre_init(self):
         self.env.reset()
         self.assertIsInstance(self.env.action_space, Space)
-        self.assertEqual(9, self.env.action_space.shape)
-        self.assertEqual(3, max(self.env.action_space.high))
-        self.assertEqual(3, min(self.env.action_space.high))
-        self.assertEqual(1, max(self.env.action_space.low))
-        self.assertEqual(1, min(self.env.action_space.low))
+        self.assertEqual(9, self.env.action_space.shape[0])
+        self.assertEqual(3, max(self.env.action_space.nvec))
+        self.assertEqual(3, min(self.env.action_space.nvec))
 
     def test_action_space_post_init(self):
         self.init_board()
         self.assertIsInstance(self.env.action_space, Space)
-        self.assertEqual(2, self.env.action_space.shape)
-        self.assertEqual(27, max(self.env.action_space.high))
-        self.assertEqual(27, min(self.env.action_space.high))
-        self.assertEqual(0, max(self.env.action_space.low))
-        self.assertEqual(0, min(self.env.action_space.low))
+        self.assertEqual(2, self.env.action_space.shape[0])
+        self.assertEqual(27, max(self.env.action_space.nvec))
+        self.assertEqual(27, min(self.env.action_space.nvec))
 
     def test_observation_space(self):
         self.assertIsInstance(self.env.observation_space, spaces.Dict)
@@ -238,23 +234,17 @@ class RPS3GameEnvTest(unittest.TestCase):
         self.assertEqual(28, obs_sp['occupied'].n)
         self.assertEqual(28, obs_sp['player_owned'].n)
         piece_type = obs_sp['piece_type']
-        self.assertEqual(28, piece_type.shape)
-        self.assertEqual(3, max(piece_type.high))
-        self.assertEqual(3, min(piece_type.high))
-        self.assertEqual(-1, max(piece_type.low))
-        self.assertEqual(-1, min(piece_type.low))
+        self.assertEqual(28, piece_type.shape[0])
+        self.assertEqual(3, max(piece_type.nvec))
+        self.assertEqual(3, min(piece_type.nvec))
         player_captures = obs_sp['player_captures']
-        self.assertEqual(3, player_captures.shape)
-        self.assertEqual(3, max(player_captures.high))
-        self.assertEqual(3, min(player_captures.high))
-        self.assertEqual(0, max(player_captures.low))
-        self.assertEqual(0, min(player_captures.low))
+        self.assertEqual(3, player_captures.shape[0])
+        self.assertEqual(3, max(player_captures.nvec))
+        self.assertEqual(3, min(player_captures.nvec))
         opponent_captures = obs_sp['opponent_captures']
-        self.assertEqual(3, opponent_captures.shape)
-        self.assertEqual(3, max(opponent_captures.high))
-        self.assertEqual(3, min(opponent_captures.high))
-        self.assertEqual(0, max(opponent_captures.low))
-        self.assertEqual(0, min(opponent_captures.low))
+        self.assertEqual(3, opponent_captures.shape[0])
+        self.assertEqual(3, max(opponent_captures.nvec))
+        self.assertEqual(3, min(opponent_captures.nvec))
 
     def test_reward_range(self):
         self.assertEqual(-100, self.env.reward_range[0])
