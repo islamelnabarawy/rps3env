@@ -24,7 +24,8 @@ from gym import spaces
 
 import rps3env.config
 from rps3env import opponents
-from rps3env.classes import PieceType, PlayerColor, Match, BoardPiece
+from rps3env.classes import PieceType, PlayerColor, Match
+from rps3env.classes.viewer import Viewer
 
 __author__ = 'Islam Elnabarawy'
 
@@ -44,13 +45,6 @@ BOARD_TEMPLATE = """
                 {5} {20}  {3}
                    {4}
 """
-
-BOARD_POSITIONS = [
-    (557, 250), (518, 156), (455, 89), (371, 49), (279, 38), (191, 62), (119, 110), (67, 180), (42, 259),
-    (42, 347), (78, 440), (147, 512), (228, 550), (321, 559), (408, 536), (478, 489), (531, 420), (558, 339),
-    (463, 234), (380, 141), (255, 128), (158, 191), (122, 305), (172, 421), (283, 475), (400, 444), (467, 355),
-    (300, 300)
-]
 
 
 def i2l(i):
@@ -89,7 +83,7 @@ class RPS3GameEnv(gym.Env):
         self._action_space = None  # type: spaces.MultiDiscrete
         self._observation_space = None  # type: spaces.Tuple
         self._reward_range = None  # type: (int, int)
-        self._window = None
+        self._viewer = None
 
     @property
     def action_space(self) -> spaces.MultiDiscrete:
@@ -204,9 +198,9 @@ class RPS3GameEnv(gym.Env):
         if mode not in self.metadata['render.modes']:
             raise gym.error.UnsupportedMode
         if close:
-            if self._window is not None:
-                self._window.close()
-                self._window = None
+            if self._viewer is not None:
+                self._viewer.close()
+                self._viewer = None
             return
         if mode == 'ansi':
             return self._get_text_output()
@@ -290,61 +284,14 @@ class RPS3GameEnv(gym.Env):
         self._opponent.apply_move(move_data)
 
     def _render_viewer(self, return_rgb_array=False):
-        import numpy as np
-        import pyglet
-        from pyglet import gl
+        if self._viewer is None:
+            self._viewer = Viewer(rps3env.config.VIEWER_WIDTH, rps3env.config.VIEWER_HEIGHT)
 
-        if self._window is None:
-            import os
-            self._bg = pyglet.image.load(os.path.join(os.path.dirname(__file__), '../assets/board.png'))
-            self._window = pyglet.window.Window(
-                width=rps3env.config.VIEWER_WIDTH,
-                height=rps3env.config.VIEWER_HEIGHT
-            )  # type: pyglet.window
-
-            gl.glEnable(gl.GL_BLEND)
-            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-
-        gl.glClearColor(1, 1, 1, 1)
-        self._window.clear()
-        self._window.switch_to()
-        self._window.dispatch_events()
-        board_offset_x = 50
-        board_offset_y = 50
-
-        def draw_piece(index: int, piece: BoardPiece):
-            x, y = BOARD_POSITIONS[index]
-            color = (0, 0, 255, 255) if piece.color == PlayerColor.Blue else (255, 0, 0, 255)
-            pyglet.text.Label(
-                ('{}!' if piece.revealed else '{}').format(piece.piece_type.name),
-                font_name='Arial', font_size=28, anchor_x='center', anchor_y='center',
-                x=x + board_offset_x, y=y + board_offset_y, color=color
-            ).draw()
-
-        self._bg.blit(board_offset_x, board_offset_y, width=600, height=600)
-
-        for i, p in enumerate(self._match.board):
-            if p is not None:
-                draw_piece(i, p)
-
+        match_result = None
         if self._match.game_over:
-            txt = "Game Over! {} won.".format('Player' if self._player_won else 'Opponent')
-            label = pyglet.text.Label(
-                txt, font_name='Arial', font_size=32, anchor_x='center', anchor_y='center',
-                x=350, y=30, color=(0, 0, 0, 255)
-            )
-            label.draw()
+            match_result = 1 if self._player_won else -1
 
-        arr = None
-        if return_rgb_array:
-            buffer = pyglet.image.get_buffer_manager().get_color_buffer()
-            arr = np.fromstring(buffer.get_image_data().data, dtype=np.uint8, sep='')
-            arr = arr.reshape(buffer.height, buffer.width, 4)
-            arr = arr[::-1, :, 0:3]
-
-        self._window.flip()
-
-        return arr
+        return self._viewer.render(self._match.board, match_result, return_rgb_array)
 
 
 class RPS3GameMinMaxEnv(RPS3GameEnv):

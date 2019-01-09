@@ -27,7 +27,8 @@ from pyglet.window import mouse, key
 # noinspection PyUnresolvedReferences
 import rps3env
 from rps3env import envs, config
-from rps3env.envs.rps3_game import BOARD_POSITIONS, l2i
+from rps3env.classes.viewer import BOARD_POSITIONS
+from rps3env.envs.rps3_game import l2i
 
 __author__ = 'Islam Elnabarawy'
 
