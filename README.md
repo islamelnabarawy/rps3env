@@ -41,7 +41,7 @@ For a playable single- and mutli-player version of the game, see the game's [web
 
 ## License
 
-Copyright 2017 Islam Elnabarawy
+Copyright 2019 Islam Elnabarawy
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
