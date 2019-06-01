@@ -58,3 +58,9 @@ class BoardPiece(object):
     @revealed.setter
     def revealed(self, value):
         self._revealed = value
+
+    def __str__(self):
+        return '{}{}{}'.format(self.color.name[0], self.piece_type.name, '!' if self.revealed else '')
+
+    def __repr__(self) -> str:
+        return 'BoardPiece(type={}, color={}, revealed={})'.format(self.piece_type.name, self.color.name, self.revealed)
